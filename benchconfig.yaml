@@ -1,0 +1,81 @@
+---
+Configuration:
+    number: 23
+    myStr: toto
+
+Titre: "BANC DE TEST AGIV "
+
+
+# ------ Relay values --------
+# Corespondance Bits AGIV vs relay              
+#       b8      b7      b6      b5      b4      b3      b2      b1      b0
+#       nc      nc      Rr-     Rr+     Pwr     Rb-     Ra-     Rb+     Ra+           
+# V+ connections:   A=x00,  B=x01,  C=x02,  D=x03
+# V- connections:   A=x00,  B=x04,  C=x08,  D=x0C
+# V- to Pwr: x10
+# R hom +: x20
+# R hom -: x40
+# 
+
+
+Commands:
+    aoip_mes: 'MEAS2?'
+    aoip_out: 'Sour{}'
+    giv_mes: 'IN:VAL?'
+    giv_out: 'OUT:VAL{}'
+    wait_time: 1.0
+
+Ranges:
+    "Choisisez la gamme":
+        active: False
+
+    "Sortie courant 0-20 mA":
+        active: True
+        relays: [0x04]  # V+:A, V-:B
+        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 100MA;SUPPLY OFF"
+        giv4: ":MODE OUTPUT_CURRENT_020MA"
+        measure_on: aoip    # The giv is on output mode, the measure is on AOIP
+        correction: "GIV4 GAIN, OFFSET"
+        points: [0.0, 2.0, 4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        tolerance: 0.001
+
+    "Sortie courant 4-20 mA":
+        active: True
+        relays: [0x04]     # V+:A, V-:B
+        aoip: "MEASURE2:CURR?"
+        giv4: ":MODE INPUT_CURRENT_420MA"
+        measure_on: aoip 
+        correction: "GIV4 GAIN, OFFSET"
+        points: [4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        tolerance: 0.001
+
+    "Sortie courant 4-20 mA passive":
+        active: True
+        relays: [0x03, 0x04, 0x10]     # V+:D, V-:B, Pwr
+        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 100MA;SUPPLY ON"
+        giv4: ":MODE INPUT_CURRENT_420MA"
+        measure_on: aoip 
+        correction: "GIV4 GAIN, OFFSET"
+        points: [4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        tolerance: 0.001
+
+    "Mesure de tension > 0":
+        active: True
+        relays: [0x01]     # V+:D, V-:A
+        aoip: ":sour:volt:range 10V;:sour:volt 1V;"
+        giv4: ":INPUT_VOLTAGE_030V"
+        measure_on: giv 
+        correction: "GIV4 GAIN, OFFSET"
+        points: [0.1, 1.0, 8.0, 10.0, 12.0, 16.0, 20.0, 30.0]
+        tolerance: 0.001
+
+    "Mesure de courrant 0-20 mA Pwr externe":
+        active: True
+        relays: [0x00,0x0C,0x10] # V+:A,  V-:D, Pwr 
+        aoip: ":sour:func curr"
+        aoip_out: 'Sour:current {}mA'      # More priority than general command
+        giv4: ":INPUT_CURRENT_020MA"
+        measure_on: giv 
+        correction: "GIV4 GAIN, OFFSET"
+        points: [4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        tolerance: 0.001
