@@ -1,6 +1,8 @@
 # This Python file uses the following encoding: utf-8
+# to convert ui file: 
+# pyside2-uic MainWindow.ui -o MainWindow.py
 
-from PySide2.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 from PySide2 import QtWidgets
 from PySide2.QtGui import QPalette
 
@@ -22,6 +24,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
         self.setupUi(self)
         self.QTextConsole.show()    # To display initialisation errors 
+        self.vCalibrateLayout = None  # Initialised later with the scrolling zone
+        self.vMeasureLayout = None       # Initialised later (same idea )
         self.list_measures = list() # Empty as none are selected
         self.checkThread = None     # Thread used to check the measure points 
         self.cfg_selected = None    # shortcut to config info of the selected range
@@ -43,6 +47,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for game, game_data in self.cfg_ranges.items():
             self.comboRangeSelection.addItem(game)  
 
+        self.vMeasureLayout = createVLayerForScroll(self.scrollMeasures)
+        self.vCalibrateLayout = createVLayerForScroll(self.scrollCalibrate)
+
         self.comboRangeSelection.currentTextChanged.connect(self.range_choosed)
         self.QPshBtGo.setEnabled(False)     # Waiting for a enabled range selected
         self.QPshBtGo.clicked.connect(self.start_check_measures) 
@@ -54,7 +61,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Erase the previous selected measures
         self.list_measures.clear()  
         # Delete previous measure point widgets
-        clearLayout(self.vMeasuresLayout)
+        #clearLayout(self.scrollMeasures)        # New: we use a scroll widget
+        clearLayout(self.vMeasureLayout)
 
         if self.cfg_selected['active'] == True:   # Only if the range selected is enabled
             # Create a list of all point and a layout with there values
@@ -65,7 +73,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for measure in self.cfg_selected['points']:
                 current_measure = CMeasure(measure)
                 self.list_measures.append(current_measure)   # Append the measures points
-                self.vMeasuresLayout.addLayout(current_measure.hiew)    # Add his viewer widget  
+                self.vMeasureLayout.addLayout(current_measure.hiew)    # Add his viewer widget  
+            #self.scrollMeasures.show()
+
         else:
             self.QPshBtGo.setEnabled(False)
             print('selected range "{}" is disabled'.format(selected_range))
@@ -112,28 +122,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.comboRangeSelection.setEnabled(False)  # Continue working is forbiden
 
     def quit_application(self):
-        AppMainWindow.devices.stop()
+        self.devices.stop()
         QApplication.quit()
 
 
 if __name__ == "__main__":
     app = QApplication([])
-    AppMainWindow = MainWindow("benchconfig.yaml")
+    AppMW = MainWindow("benchconfig.yaml")
 
     # Connect all the devices with serial port and SCPI protocol
     # We connect the devices here, in order to show the device communication in the 
     # QTextConsole dialog
     try:
-        AppMainWindow.devices = CDevicesDriver(AppMainWindow.config, 
-                AppMainWindow, AppMainWindow.show_request_in_Qmessage)
+        AppMW.devices = CDevicesDriver(AppMW.config, 
+                AppMW, AppMW.show_request_in_Qmessage)
     except ConnectionError as exc:
         # Stop if there is an error at the initialisation
-        AppMainWindow.disable_MainWindow_with_error(str(exc))  
-            # Only display the error message in case of protocol problem  
-        AppMainWindow.devices.sig_communication_error.connect(AppMainWindow.display_error)
+        AppMW.disable_MainWindow_with_error(str(exc))  
+        # Only display the error message in case of protocol problem  
+        AppMW.devices.sig_communication_error.connect(AppMW.display_error)
     
-    AppMainWindow.QTextConsole.append("Starting")
-    AppMainWindow.show()
+    AppMW.QTextConsole.append("Starting")
+
+    for i in range(1,20):
+        hLayout= QHBoxLayout()
+        AppMW.vCalibrateLayout.addLayout(hLayout)
+        hLayout.addWidget(QCheckBox("Range {}".format(i)))
+        hLayout.addWidget(QPushButton("Test"))
+ 
+    AppMW.show()
     exit = app.exec_()    
     sys.exit(exit)
 

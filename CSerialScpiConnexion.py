@@ -57,17 +57,18 @@ class CSerialScpiConnexion(QObject):
             self.device_port = None
 
 
-    def send_request(self, str_tx):
+    def send_request(self, str_tx, _sleep=None):
         """ Send a request to the device, and wait for the response.
         Send a signal with the exchange at the the end of a success exchange """
         self.device_port.flush()
         str_tx += '\n'      # Add the term character to the command
         self.device_port.write(str_tx.encode())  # encode is required to convert str to byte[]
-        time.sleep(self.sleep)
+        sleep = _sleep if _sleep is not None else self.sleep  # Use provided sleep if given 
+        time.sleep(sleep)
         str_rx = ''
         while self.device_port.inWaiting() > 0:
             str_rx += str(self.device_port.readline()).replace("\\r","").replace("\\n","").replace("'","").replace("b","")
-            time.sleep(self.sleep/10.0)
+            time.sleep(0.001)
         # if we receive a response, emit the signal RequestComplete
         if len(str_rx) > 0:
             pass
