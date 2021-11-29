@@ -1,10 +1,13 @@
 # This Python file uses the following encoding: utf-8
 import time
 
-from PySide2.QtCore import QObject, Signal, Slot, QThread
+from PySide2.QtCore import QEventLoop, QObject, Signal, Slot, \
+                            QThread, QCoreApplication, QEventLoop
 from random import randrange
 from Utilities import *
 from CDevicesDriver import CDevicesDriver #check_value
+
+from GlobalVar import run_thread
 
 #class CCheck_measures_list(threading.Thread):
 class CCheck_measures_list(QThread):
@@ -47,6 +50,7 @@ class CCheck_measures_list(QThread):
 
     def run(self):
         global txt_info
+        global run_thread
         print ("Running thread measure list")
         print ( self.list_mes_pt)
         self.reset()
@@ -58,10 +62,13 @@ class CCheck_measures_list(QThread):
             txt_info = "check the point {}".format(a_point.check_value)
             self.sigAddText.emit(q_green_color, txt_info)
             nb_try = 3
-            while nb_try:
+            while run_thread and nb_try:
+                print("run_thread: {}".format(run_thread))
+                # QEventLoop.processEvents(QEventLoop.AllEvents)    # Check for quit signal
                 val_read = self.device_driver.check_value(a_point.check_value)
                 (check_ok, min, max) = self.check_read_val(val_read, val_send, tol_percent, tol_digit)
                 a_point.check = check_ok
+                a_point.read_value = val_read
                 print( "check {:0.4f} < {:0.4f}  < {:0.4f}  : {}".format(max, val_read, min, a_point.check))
                 if  a_point.check: # end if the measure is good
                     break

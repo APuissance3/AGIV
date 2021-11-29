@@ -22,9 +22,24 @@ class CMeasure(object):
         self.vled.setGeometry(100,100,600,400)
         self.update_indicator_color()
         self.hiew.addWidget(self.vled)
+        self.lbl_read_val= QLineEdit()
+        self.lbl_read_val.setFixedWidth(100)
+        self.lbl_read_val.setAlignment(Qt.AlignCenter)
+        self.lbl_read_val.setText("-----")
+        self.hiew.addWidget(self.lbl_read_val)
         #self.hiew.addWidget(self.vvalue)
         #self.vbutton= QPushButton("Ajuster")
         #self.hiew.addWidget(self.vbutton)
+
+    def __set_attr__(self, attribute, new_val):
+        """ Force the update of the widget if we change the read value """
+        print("__set_attr__ : '" + attribute +"'")
+        if attribute == 'read_value':
+            self.read_value = new_val
+            mystr = "  {8.4}".format(self.read_value)
+            self.lbl_read_val.setText(mystr)
+
+
 
     def update_indicator_color(self):
         if self.check == True:

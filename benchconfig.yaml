@@ -91,7 +91,7 @@ Ranges:
         calibrate: True
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 100mV"
-        giv4: ":OUTPUT_VOLTAGE_0100MV"
+        giv4: ":MODE OUTPUT_VOLTAGE_0100MV"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 140.0]
@@ -103,7 +103,7 @@ Ranges:
         calibrate: True
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 50V"
-        giv4: ":OUTPUT_VOLTAGE_010V"
+        giv4: ":MODE OUTPUT_VOLTAGE_010V"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.2, 15.0]
@@ -115,7 +115,7 @@ Ranges:
         calibrate: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
-        giv4: ":OUTPUT_RESISTOR_0400OHMS"
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 450.0]
@@ -127,7 +127,7 @@ Ranges:
         calibrate: True
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
-        giv4: ":OUTPUT_RESISTOR_0400OHMS"
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 450.0]
@@ -139,7 +139,7 @@ Ranges:
         calibrate: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
-        giv4: ":OUTPUT_RESISTOR_04KOHMS"
+        giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 4500.0]
@@ -151,7 +151,7 @@ Ranges:
         calibrate: True
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         aoip: ":SENSE2:FUNC RES:AUTO ON"
-        giv4: ":OUTPUT_RESISTOR_04KOHMS"
+        giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 4500.0]
@@ -164,7 +164,7 @@ Ranges:
         calibrate: True
         relays: [0x0, 0x0C]     # V+:A, V-:D
         aoip: ":sour:volt:range 50V;:sour:volt 1"
-        giv4: ":INPUT_VOLTAGE_030V"
+        giv4: ":MODE INPUT_VOLTAGE_030V"
         measure_on: giv 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 30.0]
@@ -173,10 +173,10 @@ Ranges:
 
     "Mesure de courrant 0-20 mA Pwr externe":  # Le CALYS ne sait pas coupper la source pour ce cas
         active: True
-        relays: [0x01,0x0C,0x10] # V+:B,  V-:D, Pwr 
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
-        giv4: ":INPUT_CURRENT_020MA"
+        giv4: ":MODE INPUT_CURRENT_020MA"
         measure_on: giv 
         correction: "GIV4 GAIN, OFFSET"
         calibration_points: [0.0, 22.0]
@@ -188,7 +188,7 @@ Ranges:
         relays: [0x00,0x0C,0x10] # V+:A,  V-:B, Pwr 
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
-        giv4: ":INPUT_CURRENT_020MA"
+        giv4: ":MODE INPUT_CURRENT_020MA"
         measure_on: giv 
         correction: "GIV4 GAIN, OFFSET"
         points: [4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]

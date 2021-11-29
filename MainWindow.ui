@@ -72,8 +72,8 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>60</y>
+      <x>0</x>
+      <y>50</y>
       <width>781</width>
       <height>441</height>
      </rect>
@@ -163,7 +163,7 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>340</x>
+        <x>570</x>
         <y>50</y>
         <width>75</width>
         <height>41</height>
@@ -183,7 +183,7 @@
        <rect>
         <x>20</x>
         <y>50</y>
-        <width>291</width>
+        <width>421</width>
         <height>41</height>
        </rect>
       </property>
@@ -211,29 +211,52 @@
        <string>Gamme</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBtSendGiv">
+     <widget class="QScrollArea" name="scrollMeasures">
       <property name="geometry">
        <rect>
-        <x>450</x>
-        <y>350</y>
-        <width>75</width>
-        <height>23</height>
+        <x>120</x>
+        <y>100</y>
+        <width>201</width>
+        <height>291</height>
        </rect>
       </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
+      <property name="widgetResizable">
+       <bool>true</bool>
       </property>
-      <property name="text">
-       <string>GIV4</string>
+      <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>199</width>
+         <height>289</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QLineEdit" name="lineEdit">
+      <property name="geometry">
+       <rect>
+        <x>430</x>
+        <y>280</y>
+        <width>113</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Debug</string>
+     </attribute>
      <widget class="QPushButton" name="pBtSendAoip">
       <property name="geometry">
        <rect>
-        <x>360</x>
-        <y>350</y>
+        <x>150</x>
+        <y>40</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -250,8 +273,8 @@
      <widget class="QPushButton" name="pBtSendRly">
       <property name="geometry">
        <rect>
-        <x>270</x>
-        <y>350</y>
+        <x>60</x>
+        <y>40</y>
         <width>75</width>
         <height>23</height>
        </rect>
@@ -260,56 +283,54 @@
        <string>Relais</string>
       </property>
      </widget>
+     <widget class="QComboBox" name="cBoxDbgSendCmd">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>100</y>
+        <width>671</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="editable">
+       <bool>true</bool>
+      </property>
+      <item>
+       <property name="text">
+        <string>*SYS:ERR?</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QPushButton" name="pBtSendGiv">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>40</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>GIV4</string>
+      </property>
+     </widget>
      <widget class="QLabel" name="label_6">
       <property name="geometry">
        <rect>
-        <x>260</x>
-        <y>290</y>
-        <width>131</width>
-        <height>16</height>
+        <x>60</x>
+        <y>70</y>
+        <width>181</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
        <string>Send Debug command</string>
       </property>
-     </widget>
-     <widget class="QLineEdit" name="dbgSendEdit">
-      <property name="geometry">
-       <rect>
-        <x>260</x>
-        <y>310</y>
-        <width>471</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>14</pointsize>
-       </font>
-      </property>
-     </widget>
-     <widget class="QScrollArea" name="scrollMeasures">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>100</y>
-        <width>161</width>
-        <height>291</height>
-       </rect>
-      </property>
-      <property name="widgetResizable">
-       <bool>true</bool>
-      </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents_2">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>159</width>
-         <height>289</height>
-        </rect>
-       </property>
-      </widget>
      </widget>
     </widget>
    </widget>

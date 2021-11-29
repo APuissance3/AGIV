@@ -36,13 +36,13 @@ class CSerialScpiConnexion(QObject):
             cls.list_com_ports = cls.find_USB_device()
 
 
-    def __init__(self, id_name, color=None,  sleep=0.5, parent=None):
+    def __init__(self, id_name, color=None,  time_out=0.5, parent=None):
         super(CSerialScpiConnexion, self).__init__(parent)
         self.initialise_com_ports() # Buil com port list if it is not make yet
         self.id_string = None
         self.device_port = None
         self.color = color       # Optional color passed to display the exchange in a terminal
-        self.sleep = sleep
+        self.time_out = time_out
         self.try_connect(id_name)
         self.rx = None
         self.tx = None
@@ -63,12 +63,13 @@ class CSerialScpiConnexion(QObject):
         self.device_port.flush()
         str_tx += '\n'      # Add the term character to the command
         self.device_port.write(str_tx.encode())  # encode is required to convert str to byte[]
-        sleep = _sleep if _sleep is not None else self.sleep  # Use provided sleep if given 
-        time.sleep(sleep)
+        #sleep = _sleep if _sleep is not None else self.sleep  # Use provided sleep if given 
+        #time.sleep(sleep)
         str_rx = ''
-        while self.device_port.inWaiting() > 0:
-            str_rx += str(self.device_port.readline()).replace("\\r","").replace("\\n","").replace("'","").replace("b","")
-            time.sleep(0.001)
+        #while self.device_port.inWaiting() > 0:
+        str_rx= str(self.device_port.readline()).replace("\\r","").replace("\\n","") \
+                                                .replace("'","").replace("b","")
+        #    time.sleep(0.001)
         # if we receive a response, emit the signal RequestComplete
         if len(str_rx) > 0:
             pass
@@ -84,7 +85,7 @@ class CSerialScpiConnexion(QObject):
             self.device_port = serial.Serial( 
                 port = s_port,
                 baudrate = 115200,      # N,8,1 by default 
-                timeout = 0.5
+                timeout = self.time_out
             )
             if not self.device_port.is_open:
                  self.device_port.open()

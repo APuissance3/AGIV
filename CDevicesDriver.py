@@ -44,7 +44,7 @@ class CDevicesDriver(QtCore.QObject):
             self.str_error = "Pas de connexion avec le banc AGIV" #"Can't find AGIV bench"
             #raise ConnectionError(self.str_error)
         try:
-            self.scpi_aoip = CSerialScpiConnexion(",CALYS", color_bluepurple)
+            self.scpi_aoip = CSerialScpiConnexion(",CALYS", color=color_bluepurple, time_out=2.0)
             if display_function_connector:
                 self.scpi_aoip.sigRequestComplete.connect(display_function_connector)
                 # Force the display of the ID exchange
@@ -186,15 +186,15 @@ class CDevicesDriver(QtCore.QObject):
         
 
     def send_debug_rly(self):
-        str = self.pw.dbgSendEdit.text()
+        str = self.pw.cBoxDbgSendCmd.currentText()
         self.scpi_relays.send_request(str)
 
     def send_debug_aoip(self):
-        str = self.pw.dbgSendEdit.text()
+        str = self.pw.cBoxDbgSendCmd.currentText()
         self.scpi_aoip.send_request(str)
 
     def send_debug_giv(self):
-        str = self.pw.dbgSendEdit.text()
+        str = self.pw.cBoxDbgSendCmd.currentText()
         self.scpi_giv4.send_request(str)
 
     def route_debug_widgets(self):
