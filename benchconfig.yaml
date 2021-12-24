@@ -20,11 +20,11 @@ Titre: "BANC DE TEST AGIV "
 
 Commands:
     aoip_mes: 'MEAS2?'
-    aoip_out: 'Sour{}'
+    aoip_out: 'Sour {}'
     aoip_meas_time: 1.0      # Waiting time between source setting and Aoip measure
     giv_mes: 'IN:VAL?'
-    giv_out: 'OUT:VAL{}'
-    giv_meas_time: 0.5  # Time to stabilize input value on the giv
+    giv_out: 'OUT:VAL {};:OUT:VAL?'
+    giv_meas_time: 2.0  # Time to stabilize input value on the giv
     aoip_range_sel_time: 2.0    # waiting time between range change and the reply of Aoip 
 
 Ranges:
@@ -33,8 +33,9 @@ Ranges:
 
     "Allume la Led":
         active: True
+        calibrate: False 
         relays: [0x80] 
-        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
+        aoip: ["SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF",'toto']
         giv4: ":MODE OUTPUT_CURRENT_020MA"
         measure_on: aoip    # The giv is on output mode, the measure is on AOIP
         correction: "GIV4 GAIN, OFFSET"
@@ -48,9 +49,9 @@ Ranges:
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
         giv4: ":MODE OUTPUT_CURRENT_020MA"
         measure_on: aoip    # The giv is on output mode, the measure is on AOIP
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 140.0]
-        points: [0.0, 2.0, 4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        correction: ":OUT:CUR:ADJ_DAC_"
+        calibration_points: [0.1, 23.5]
+        points: [0.0, 2.0] # 4.0,, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
         tolerance: [0.05, 0.001]  # 0.05% +/-0.0
 
     "Sortie courant 4-20 mA":
@@ -58,7 +59,7 @@ Ranges:
         calibrate: False  
         relays: [0x04]     # V+:A, V-:B
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
-        giv4: ":MODE INPUT_CURRENT_420MA"
+        giv4: ":MODE OUTPUT_CURRENT_420MA"
         measure_on: aoip 
         points: [4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
         tolerance: [0.05, 0.001]  # 0.05% +/-0.0
@@ -93,10 +94,26 @@ Ranges:
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 100mV"
         giv4: ":MODE OUTPUT_VOLTAGE_0100MV"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 140.0]
-        points: [-40.0, 0.0, 10.0, 20.0, 40.0, 80.0, 100.0, 140.0]
+        correction: ":OUTput:VOLTage:0100MV:ADJ_DAC_"
+        calibration_points: [-10.00, 115.0]
+        points: [-24.0, 0.0, 10.0, 20.0, 40.0, 80.0, 100.0, 115.0]
         tolerance: [0.05, 0.001]  # 0.05% +/-1µV
+
+
+    "Sortie thermocouple T avec compensation":
+        active: True
+        calibrate: True
+        relays: [0x02, 0x0C]     # V+:C, V-:D
+        aoip: "SENSE2:FUNC TCOUPLE;:SENSE2:TC:TYPE T"
+        aoip2: "SENSE2:TC:DISP CEL;:SENSE2:TC:RJUN:TYPE INT"
+        giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:INT"
+        measure_on: aoip 
+        correction: "None"
+        calibration_points: [-200.00, 380.0]
+        points: [-200.0, 0.0, 100.0, 400.0]
+        tolerance: [0.05, 0.04]  # 0.05% +/-0.04°C
+
+
 
     "Sortie tension 0..10V":
         active: True
@@ -105,32 +122,40 @@ Ranges:
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 50V"
         giv4: ":MODE OUTPUT_VOLTAGE_010V"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.2, 15.0]
-        points: [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+        correction: ":OUTput:VOLTage:010V:ADJ_DAC_"
+        calibration_points: [0.1, 15.0]
+        points: [0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 15.0]
         tolerance: [0.05, 0.1]  # 0.05% +/-1mV
 
     "Sortie resistance (+) 0.. 450R":
         active: True
         calibrate: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
-        aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 400OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 450.0]
-        points: [0.0, 0.1, 1.0, 80.0, 160.0, 240.0, 320.0, 450.0]
+        aoip_meas_time: 2.0 # Resistor is more slow
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -476.0    # For resistance, 1.0 offset is compensed with -1/476.0
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 400.0]
+        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
         tolerance: [0.05, 0.03]  # Il faut aussi passer 0.05%
 
     "Sortie resistance (-) 0.. 450R":
         active: True
         calibrate: True
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
-        aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 400OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 450.0]
+        aoip_meas_time: 2.0 # Resistor is more slow
+        correction: ":OUTput:RES:0400:NEG:ADJ_DAC_"
+        z_factor: -476.0    # For resistance, 1.0 offset is compensed with -1/476.0
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 400.0]
         points: [0.0, 0.1, 1.0, 80.0, 160.0, 240.0, 320.0, 450.0]
         tolerance: [0.05, 0.03]  #  0.05% +/- 0.03R
 
@@ -138,24 +163,32 @@ Ranges:
         active: True
         calibrate: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
-        aoip: ":SENSE2:FUNC RES;RES:AUTO ON"
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 4500.0]
-        points: [0.0, 1.0, 10.0, 800.0, 1600.0, 2400.0, 3200.0, 4500.0]
+        aoip_meas_time: 2.0 # Resistor is more slow
+        correction: ":OUTput:RES:04K:POS:ADJ_DAC_"
+        z_factor: -4906.0    # For resistance, 1.0 offset is compensed with -1/(4916-10)
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 3600.0]
+        points: [0.0, 1.0, 10.0, 800.0, 1600.0, 2400.0, 3200.0, 3600.0]
         tolerance: [0.05, 0.03]  # Il faut aussi passer 0.05%
 
     "Sortie resistance (-) 0.. 4500R":
         active: True
         calibrate: True
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
-        aoip: ":SENSE2:FUNC RES:AUTO ON"
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        correction: "GIV4 GAIN, OFFSET"
-        calibration_points: [0.0, 4500.0]
-        points: [0.0, 1.0, 10.0, 800.0, 1600.0, 2400.0, 3200.0, 4500.0]
+        aoip_meas_time: 2.0 # Resistor is more slow
+        correction: ":OUTput:RES:04K:NEG:ADJ_DAC_"
+        z_factor: -4906.0    # For resistance, 1.0 offset is compensed with -1/(4916-10)
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 3600.0]
+        points: [0.0, 1.0, 10.0, 800.0, 1600.0, 2400.0, 3200.0, 3600.0]
         tolerance: [0.05, 0.03]  #  0.05% +/- 0.03R
 
 
@@ -166,19 +199,21 @@ Ranges:
         aoip: ":sour:volt:range 50V;:sour:volt 1"
         giv4: ":MODE INPUT_VOLTAGE_030V"
         measure_on: giv 
-        correction: "GIV4 GAIN, OFFSET"
+        correction: ":INput:VOLTage:EXT:ADJ_ADC_"
         calibration_points: [0.0, 30.0]
         points: [0.1, 1.0, 8.0, 10.0, 12.0, 16.0, 20.0, 31.0]
         tolerance: [0.1, 0.01]  # 0.1%, +/-10mV
 
     "Mesure de courrant 0-20 mA Pwr externe":  # Le CALYS ne sait pas coupper la source pour ce cas
         active: True
+        calibrate: True
+        calibration_points: [0.0, 20.0]
         relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
         giv4: ":MODE INPUT_CURRENT_020MA"
         measure_on: giv 
-        correction: "GIV4 GAIN, OFFSET"
+        correction: ":INput:CURrent:ADJ_ADC_"
         calibration_points: [0.0, 22.0]
         points: [0.0, 2.0, 4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
         tolerance: [0.05,0.001]  # 0.05% +/-1µA

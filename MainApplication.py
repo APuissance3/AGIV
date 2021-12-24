@@ -2,155 +2,188 @@
 # to convert ui file: 
 # pyside2-uic MainWindow.ui -o MainWindow.py
 
-from PySide2.QtWidgets import QApplication, QCheckBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from PySide2.QtWidgets import QApplication, QMessageBox
 from PySide2 import QtWidgets
-from PySide2.QtGui import QPalette
+from PySide2 import QtCore
 
 import sys
-import yaml
+
+
 # Our classes 
-from CMeasure import CMeasure
-from CCheckMeasure import CCheck_measures_list
-from CSerialScpiConnexion import CSerialScpiConnexion
-from CDevicesDriver import CDevicesDriver
+from CCalibrateTab import CCalibrateTab
+from CMeasuresTab import CMeasuresTab
+from CDevicesDriver import CDevicesDriver, create_devices_driver, get_devices_driver
+from CConfigFile import CConfigFile, create_config_file_instance, get_config_file
 from MainWindow import Ui_MainWindow
 from Utilities import *
+from GivUtilities import *
+from GlobalVar import logger
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+
+global AppMW
+
+def get_main_window():
+    """ return AppMW for module that needs access to AppMW QWidgets"""
+    return AppMW
+
+class MainWindow(QtWidgets.QMainWindow, 
+                #Ui_MainWindow, CMeasuresTab, CCalibrateTab):
+                Ui_MainWindow):
     """ Cette classe herite de UI_MainWindow qui represente la boite de dialogue 
     principale
+    CMeasureTab and CCalibrateTab contains items to manage the measure and calibration panels
     """
-    def __init__(self, config_file_name):
-        super(MainWindow, self).__init__()
-        self.setupUi(self)
-        self.QTextConsole.show()    # To display initialisation errors 
-        self.vCalibrateLayout = None  # Initialised later with the scrolling zone
-        self.vMeasureLayout = None       # Initialised later (same idea )
-        self.list_measures = list() # Empty as none are selected
-        self.checkThread = None     # Thread used to check the measure points 
-        self.cfg_selected = None    # shortcut to config info of the selected range
-        self.config  = None         # The config loaded from the yaml file
-        self.devices = None         # The classe witch drive the SCPI lines
-        
-        # Loading all config info from YAML file
-        self.config  = None
-        with open(config_file_name, "r") as stream:
-            try:
-                self.config  = yaml.safe_load(stream)
-            except yaml.YAMLError as exc:
-                print(exc)
 
+    # This signal could be used by the childreen thread to display messages in main display
+    #sig_Uppdate_Qmessages = Signal(object, object)
+
+
+    def __init__(self):
+        super(MainWindow, self).__init__()
+
+        self.setupUi(self)
+        self.QTextConsole.setFontPointSize(NORMAL_FONT)
+        self.QTextConsole.show()    # To display initialisation errors 
+        self.config  = get_config_file()   # The config loaded from the yaml file
+ 
         self.label_Titre.setText(self.config['Titre'])
 
-        # Read our ranges data and fill ranges comboBox       
-        self.cfg_ranges = self.config['Ranges']
-        for game, game_data in self.cfg_ranges.items():
-            self.comboRangeSelection.addItem(game)  
+        self.cm_tab = CMeasuresTab(self)
+        self.cc_tab = CCalibrateTab(self)
 
-        self.vMeasureLayout = createVLayerForScroll(self.scrollMeasures)
-        self.vCalibrateLayout = createVLayerForScroll(self.scrollCalibrate)
+        self.cm_tab.sig_info_message.connect(self.Qmessages_print)
+        self.cc_tab.sig_info_message.connect(self.Qmessages_print)
 
-        self.comboRangeSelection.currentTextChanged.connect(self.range_choosed)
-        self.QPshBtGo.setEnabled(False)     # Waiting for a enabled range selected
-        self.QPshBtGo.clicked.connect(self.start_check_measures) 
-        self.pBtQuit.clicked.connect(self.quit_application)
+        self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False) 
+        self.setFixedSize(self.size()) # Disable resizing
+        
+        # Connecting information message from other tthread to the QTextConsole
+        self.cBoxAdvanced.stateChanged.connect(self.change_advanced_mode)
 
-    def  range_choosed(self, selected_range):
-        """ Called when the game is chosen. display points of the range """
-        self.cfg_selected = self.cfg_ranges[selected_range]  # Shortcut to the data
-        # Erase the previous selected measures
-        self.list_measures.clear()  
-        # Delete previous measure point widgets
-        #clearLayout(self.scrollMeasures)        # New: we use a scroll widget
-        clearLayout(self.vMeasureLayout)
 
-        if self.cfg_selected['active'] == True:   # Only if the range selected is enabled
-            # Create a list of all point and a layout with there values
-            print(selected_range)
-            self.devices.go_config(selected_range)
-            self.QPshBtGo.setEnabled(True)
-            # show the measure point of this range only if this game is enabled
-            for measure in self.cfg_selected['points']:
-                current_measure = CMeasure(measure)
-                self.list_measures.append(current_measure)   # Append the measures points
-                self.vMeasureLayout.addLayout(current_measure.hiew)    # Add his viewer widget  
-            #self.scrollMeasures.show()
+    def init_log_name(self, str):
+        logger.log_change_name('log_'+str+'.txt')
 
-        else:
-            self.QPshBtGo.setEnabled(False)
-            print('selected range "{}" is disabled'.format(selected_range))
 
-    def start_check_measures(self):
-        """ Called when Test button is pressed. Run the mesure checking for
-        all the points in another thread
-        """
-        # Pas possible on est deja dedans
-        # print("Start measure for {}".format(self.cfg_selected))
-        self.checkThread = CCheck_measures_list(
-                                self.list_measures, self.cfg_selected, self.devices)
-        self.checkThread.sigAddText.connect(self.uppdate_Qmessages)
-        self.checkThread.start()
-
-    def show_request_in_Qmessage(self, tx, rx, color):
+    def Qmessages_print(self, message, 
+            color=QColor('black') , font=NORMAL_FONT):
         if color is not None:
             self.QTextConsole.setTextColor(color)
-        mystr = "TX >" + tx + "RX >" + rx # Append add a '\n' to the appended text
-        self.QTextConsole.append(mystr)
-
-
-    # We uppdate the QTextConsole with the messages emited in the measure thread
-    def uppdate_Qmessages(self, color, message):
-        if color is not None:
-            self.QTextConsole.setTextColor(color)
+        if font is not None:
+            self.QTextConsole.setFontPointSize(font)
         self.QTextConsole.append(message)
+
+    def Qmessage_sscpi_print(self, message, color=None, font=INFO_FONT):
+        if not self.cBoxAdvanced.isChecked():
+            return
+        self.Qmessages_print(message, color, font)
+
+
 
     def display_error(self, str_err=None):
         """ Print red message in large charaters on the TextConsole """
         if str_err is not None:
-            palette = self.QTextConsole.palette()
-            color = palette.color(QPalette.WindowText) # Get actual color
-            self.QTextConsole.setTextColor(q_red_color)
-            self.QTextConsole.setFontPointSize(18.0)
-            self.QTextConsole.append(str_err)
-            self.QTextConsole.setFontPointSize(10)
-            self.QTextConsole.setTextColor(color)   # Restore the color
-            self.QTextConsole.setFontPointSize(10.0)
-        
+            self.Qmessages_print(str_err, q_red_color, BIG_FONT)
+
     def disable_MainWindow_with_error(self, str_err=None):
         """ This function used to disable the HMI if the bench initialisation fail """
         self.display_error(str_err)
-        self.comboRangeSelection.setEnabled(False)  # Continue working is forbiden
 
-    def quit_application(self):
-        self.devices.stop()
-        QApplication.quit()
+    def change_advanced_mode(self):
+        if self.cBoxAdvanced.isChecked():
+            self.cBoxMultithread.show()
+            self.cBoxWriteCal.setEnabled(True)
+            self.cBoxRazCalib.setEnabled(True)
+        else:
+            self.cBoxMultithread.hide()
+            # self.cBoxWriteCal.setChecked(True)
+            self.cBoxWriteCal.setEnabled(False)
+            self.cBoxRazCalib.setEnabled(False)
+            self.cBoxRazCalib.setChecked(True)
+
+# --------  End of MainWindow definition -----------------------
+
+
+def apply_style(app, style_fname):
+   if style_fname is not None:
+        StyleFile =  QtCore.QFile(style_fname)
+        if not StyleFile.open( QtCore.QFile.ReadOnly | QtCore.QFile.Text):
+            print( "Error opening "+ style_fname)
+            return
+        qss = QtCore.QTextStream(StyleFile)
+        #setup stylesheet
+        app.setStyleSheet(qss.readAll())
+
+def msg_dialog_unlock():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Question)
+    msg.setText("Le GIV est verouillé. On le déverouille pour la calibration ?")
+    msg.setWindowTitle("Déverouillage")
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    ret = msg.exec_()
+    return (ret == QMessageBox.Yes)
 
 
 if __name__ == "__main__":
     app = QApplication([])
-    AppMW = MainWindow("benchconfig.yaml")
+
+    cfg_object = create_config_file_instance()   # Read config file and create an instance
+    if cfg_object.config == None: # There is an error in config file
+        msg_dialog_Error("Chargement du fichier de configuration impossible.",
+            "Vérifier la présence et la cohérence de benchconfig.yaml",
+            cfg_object.strerr)
+        
+        sys.exit(1)
+
+    AppMW = MainWindow()
+    AppMW.cBoxAdvanced.setChecked(True)
+    #  Apply stylesheet file to the MainWindow 
+    apply_style(AppMW, "Qt_Style.qrc")
+
+    AppMW.QTextConsole.append("Starting")
+    AppMW.show()
 
     # Connect all the devices with serial port and SCPI protocol
-    # We connect the devices here, in order to show the device communication in the 
-    # QTextConsole dialog
-    try:
-        AppMW.devices = CDevicesDriver(AppMW.config, 
-                AppMW, AppMW.show_request_in_Qmessage)
-    except ConnectionError as exc:
+    d_drv = None
+    d_drv = create_devices_driver(
+            cfg_object.config, AppMW.Qmessage_sscpi_print, AppMW)
+    if d_drv.str_error is not None:
         # Stop if there is an error at the initialisation
-        AppMW.disable_MainWindow_with_error(str(exc))  
-        # Only display the error message in case of protocol problem  
-        AppMW.devices.sig_communication_error.connect(AppMW.display_error)
-    
-    AppMW.QTextConsole.append("Starting")
+        AppMW.disable_MainWindow_with_error(d_drv.str_error) 
+        d_drv.send_stop_remote() 
+        if d_drv.scpi_giv4 == None:
+            msg_dialog_Error("GIV4 non trouvé. Vous devez le brancher avant de lancer"
+                " le banc.")
+        else:
+             msg_dialog_Error(d_drv.str_error)
+        exit(1)
 
-    for i in range(1,20):
-        hLayout= QHBoxLayout()
-        AppMW.vCalibrateLayout.addLayout(hLayout)
-        hLayout.addWidget(QCheckBox("Range {}".format(i)))
-        hLayout.addWidget(QPushButton("Test"))
- 
-    AppMW.show()
-    exit = app.exec_()    
+    # Get GIV4 S/N and Set log file according to giv identifiant
+    giv_id = get_giv_id(d_drv.scpi_giv4)
+    giv_date = get_giv_caldate(d_drv.scpi_giv4)
+    AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
+    AppMW.lEIdentifiant.setText("GIV4_Ref_" + giv_id)
+    AppMW.lE_DateCalib.setText(giv_date)
+
+    # Check if GIV is looked. If Yes, ask to unlock
+    giv_lock = is_giv_locked(d_drv.scpi_giv4)
+    
+    # For debug, we unlock systematiquely
+    if giv_lock:
+        unlock_giv(d_drv.scpi_giv4)
+        giv_lock = False
+
+    if giv_lock:    # If GIV is locked, ask for unlock
+        res  = msg_dialog_unlock()
+        if res:
+            unlock_giv(d_drv.scpi_giv4)
+        else: # If we keep locked, disable calibration writing capabilitie 
+           AppMW.cBoxWriteCal.setChecked(False)
+           AppMW.cBoxWriteCal.setEnabled(False)
+
+
+    exit = app.exec_() 
+    d_drv.send_stop_remote() 
+
     sys.exit(exit)
 

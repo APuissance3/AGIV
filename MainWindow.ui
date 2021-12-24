@@ -9,12 +9,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>835</width>
-    <height>845</height>
+    <width>1003</width>
+    <height>884</height>
    </rect>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>12</pointsize>
+   </font>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="label_Titre">
@@ -46,35 +54,20 @@
      <rect>
       <x>20</x>
       <y>530</y>
-      <width>761</width>
+      <width>911</width>
       <height>271</height>
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pBtQuit">
-    <property name="geometry">
-     <rect>
-      <x>740</x>
-      <y>30</y>
-      <width>75</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>QUITTER</string>
-    </property>
-   </widget>
    <widget class="QTabWidget" name="tabWidget">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>0</x>
+      <x>20</x>
       <y>50</y>
-      <width>781</width>
+      <width>911</width>
       <height>441</height>
      </rect>
     </property>
@@ -83,8 +76,11 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -113,43 +109,115 @@
        </property>
       </widget>
      </widget>
-     <widget class="QPushButton" name="pBpRunCalibration">
+     <widget class="QPushButton" name="pBtRunCalibration">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>40</y>
-        <width>171</width>
-        <height>23</height>
+        <x>570</x>
+        <y>210</y>
+        <width>181</width>
+        <height>21</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lancer le contrôle ou la calibration des gammes séléctionnées.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="statusTip">
+       <string/>
       </property>
       <property name="text">
        <string>LANCER SELECTION</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBpSelectAll">
+     <widget class="QPushButton" name="pBtSelectAll">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>80</y>
-        <width>171</width>
-        <height>23</height>
+        <x>570</x>
+        <y>30</y>
+        <width>181</width>
+        <height>21</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selectionner toutes les gammes pour calibrer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>SELECT TOUT</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBpUnselectAll">
+     <widget class="QPushButton" name="pBtUnselectAll">
       <property name="geometry">
        <rect>
-        <x>530</x>
-        <y>120</y>
-        <width>171</width>
-        <height>23</height>
+        <x>570</x>
+        <y>70</y>
+        <width>181</width>
+        <height>21</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Déselectionner toutes les gammes. Utile pour revenir sur une gamme en particulier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>DESELECT TOUT</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cBoxWriteCal">
+      <property name="geometry">
+       <rect>
+        <x>580</x>
+        <y>110</y>
+        <width>171</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A laisser cochée par défaut: Si cette case n'est pas cochée, on contrôle juste les points de calibration. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>Modifier calibration</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cBoxRazCalib">
+      <property name="geometry">
+       <rect>
+        <x>580</x>
+        <y>150</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si coché, on écrase les calibrations précédentes en imposant un gain= 1 et offset à 0 avant la calibration. méthode plus lente mais plus sure. Si décoché, on ré-ajuste la calibration a partir de celle existante. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Forcer Z=0 G=1</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pBtLockGiv">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>570</x>
+        <y>270</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Permet de verouiller le GIV après calibration. L'accès à ce bouton n'est possible qu'après que tous les gammes soient calibrées.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>VERROUILLER GIV</string>
       </property>
      </widget>
     </widget>
@@ -157,47 +225,11 @@
      <attribute name="title">
       <string>Relevés</string>
      </attribute>
-     <widget class="QPushButton" name="QPshBtGo">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>570</x>
-        <y>50</y>
-        <width>75</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Test</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboRangeSelection">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>50</y>
-        <width>421</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>20</y>
+        <x>10</x>
+        <y>10</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -214,10 +246,10 @@
      <widget class="QScrollArea" name="scrollMeasures">
       <property name="geometry">
        <rect>
-        <x>120</x>
-        <y>100</y>
+        <x>420</x>
+        <y>40</y>
         <width>201</width>
-        <height>291</height>
+        <height>341</height>
        </rect>
       </property>
       <property name="widgetResizable">
@@ -229,22 +261,101 @@
          <x>0</x>
          <y>0</y>
          <width>199</width>
-         <height>289</height>
+         <height>339</height>
         </rect>
        </property>
       </widget>
      </widget>
-     <widget class="QLineEdit" name="lineEdit">
+     <widget class="QScrollArea" name="scrollMeasRange">
       <property name="geometry">
        <rect>
-        <x>430</x>
-        <y>280</y>
-        <width>113</width>
-        <height>20</height>
+        <x>10</x>
+        <y>40</y>
+        <width>391</width>
+        <height>341</height>
        </rect>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_3">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>389</width>
+         <height>339</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QPushButton" name="pBtSMeasSelectAll">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>40</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selectionner toutes les gammes pour calibrer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>SELECT TOUT</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pBtMeasUnselectAll">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>80</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Déselectionner toutes les gammes. Utile pour revenir sur une gamme en particulier.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>DESELECT TOUT</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pBtRunMeasures">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>130</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>Lancer ou arreter les relevés des gammes sélectionnées</string>
+      </property>
+      <property name="statusTip">
+       <string/>
+      </property>
+      <property name="text">
+       <string>LANCER SELECTION</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>420</x>
+        <y>10</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>16</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Mesures</string>
       </property>
      </widget>
     </widget>
@@ -257,8 +368,8 @@
        <rect>
         <x>150</x>
         <y>40</y>
-        <width>75</width>
-        <height>23</height>
+        <width>71</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="font">
@@ -275,8 +386,8 @@
        <rect>
         <x>60</x>
         <y>40</y>
-        <width>75</width>
-        <height>23</height>
+        <width>71</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -306,8 +417,8 @@
        <rect>
         <x>240</x>
         <y>40</y>
-        <width>75</width>
-        <height>23</height>
+        <width>81</width>
+        <height>21</height>
        </rect>
       </property>
       <property name="font">
@@ -332,6 +443,53 @@
        <string>Send Debug command</string>
       </property>
      </widget>
+     <widget class="QCheckBox" name="cBoxMultithread">
+      <property name="geometry">
+       <rect>
+        <x>540</x>
+        <y>40</y>
+        <width>111</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Mutithread</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cBoxAdvanced">
+      <property name="geometry">
+       <rect>
+        <x>380</x>
+        <y>40</y>
+        <width>131</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Mode avancé</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="comboRangeSelection">
+      <property name="geometry">
+       <rect>
+        <x>140</x>
+        <y>250</y>
+        <width>421</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QLabel" name="label">
@@ -352,14 +510,101 @@
      <string>Communications</string>
     </property>
    </widget>
+   <widget class="QLineEdit" name="lEIdentifiant">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>500</y>
+      <width>201</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="whatsThis">
+     <string>Identifiant unique lu dans le GIV. Cet identifiant est le nom du fichier de &quot;Log&quot; créé pour tracer les réglages réalisés</string>
+    </property>
+    <property name="text">
+     <string>GIV4</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>500</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Identifiant&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>500</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Dernier étalonnage:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lE_DateCalib">
+    <property name="geometry">
+     <rect>
+      <x>810</x>
+      <y>500</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Date du dernier étalonnage enregisté dans le GIV4.&lt;/p&gt;&lt;p&gt;C'est la date du moment ou l'on déclenche &amp;quot;verouiller le GIV&amp;quot;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>835</width>
-     <height>21</height>
+     <width>1003</width>
+     <height>27</height>
     </rect>
    </property>
   </widget>
