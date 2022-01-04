@@ -17,7 +17,7 @@ from CConfigFile import CConfigFile, create_config_file_instance, get_config_fil
 from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
-from GlobalVar import logger
+from GlobalVar import logger, xls_file
 
 
 global AppMW
@@ -63,6 +63,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
     def init_log_name(self, str):
         logger.log_change_name('log_'+str+'.txt')
+        xls_file.set_filename('Report_'+str+'.xlsx')
 
 
     def Qmessages_print(self, message, 
