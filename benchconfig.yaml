@@ -45,6 +45,7 @@ Ranges:
     "Sortie courant 0-20 mA":
         active: True
         calibrate: True  
+        english_name: "Output current 0-20mA with internal power"
         relays: [0x04]  # V+:A, V-:B
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
         giv4: ":MODE OUTPUT_CURRENT_020MA"
@@ -57,6 +58,7 @@ Ranges:
     "Sortie courant 4-20 mA":
         active: True
         calibrate: False  
+        english_name: "Output current 4-20mA with internal power"
         relays: [0x04]     # V+:A, V-:B
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
         giv4: ":MODE OUTPUT_CURRENT_420MA"
@@ -67,6 +69,7 @@ Ranges:
     "Sortie courant 0-20 mA passive":
         active: True
         calibrate: False  
+        english_name: "Output current 0-20mA with external power"
         relays: [0x03, 0x04, 0x10]     # V+:D, V-:B, Pwr
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 0MA;SUPPLY ON" # SUPPLY ON accepted only for 0mA and 4mA range
         aoip2: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA"      # We could go to 25mA range with the suply keep to on after 0mA range
@@ -78,6 +81,7 @@ Ranges:
     "Sortie courant 4-20 mA passive":
         active: True
         calibrate: False    # Calibré avec l'echelle 0..20mA
+        english_name: "Output current 4-20mA with external power"
         relays: [0x03, 0x04, 0x10]     # V+:D, V-:B, Pwr
         aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 0MA;SUPPLY ON"
         aoip2: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA"      # We could go to 25mA range with the suply keep to on after 0mA range
@@ -90,6 +94,7 @@ Ranges:
     "Sortie tension 0..100mV":
         active: True
         calibrate: True
+        english_name: "Output 0-100mV"
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 100mV"
         giv4: ":MODE OUTPUT_VOLTAGE_0100MV"
@@ -103,21 +108,23 @@ Ranges:
     "Sortie thermocouple T avec compensation":
         active: True
         calibrate: True
+        english_name: "Output TC Type T, Comp INT"
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: "SENSE2:FUNC TCOUPLE;:SENSE2:TC:TYPE T"
         aoip2: "SENSE2:TC:DISP CEL;:SENSE2:TC:RJUN:TYPE INT"
-        giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:INT"
+        giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
         measure_on: aoip 
-        correction: "None"
+        correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux du generateur 0..100mV. Ici on controle juste la cohérence des 2 compensations
         calibration_points: [-200.00, 380.0]
         points: [-200.0, 0.0, 100.0, 400.0]
-        tolerance: [0.05, 0.04]  # 0.05% +/-0.04°C
+        tolerance: [0.05, 2.0]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
 
 
 
     "Sortie tension 0..10V":
         active: True
         calibrate: True
+        english_name: "Output 0..10V"
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 50V"
         giv4: ":MODE OUTPUT_VOLTAGE_010V"
@@ -130,6 +137,7 @@ Ranges:
     "Sortie resistance (+) 0.. 450R":
         active: True
         calibrate: True
+        english_name: "Resistor simulator (+) 0..450R"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: ":SENSE2:FUNC RES;RES:RANGE 400OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
@@ -146,6 +154,7 @@ Ranges:
     "Sortie resistance (-) 0.. 450R":
         active: True
         calibrate: True
+        english_name: "Resistor simulator (-) 0..450R"
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         aoip: ":SENSE2:FUNC RES;RES:RANGE 400OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
@@ -162,6 +171,7 @@ Ranges:
     "Sortie resistance (+) 0.. 4500R":
         active: True
         calibrate: True
+        english_name: "Resistor simulator (+) 0..4500R"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
@@ -178,6 +188,7 @@ Ranges:
     "Sortie resistance (-) 0.. 4500R":
         active: True
         calibrate: True
+        english_name: "Resistor simulator (-) 0..4500R"
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
@@ -195,6 +206,7 @@ Ranges:
     "Mesure de tension 0..30V":
         active: True
         calibrate: True
+        english_name: "Voltage measure"
         relays: [0x0, 0x0C]     # V+:A, V-:D
         aoip: ":sour:volt:range 50V;:sour:volt 1"
         giv4: ":MODE INPUT_VOLTAGE_030V"
@@ -208,6 +220,7 @@ Ranges:
         active: True
         calibrate: True
         calibration_points: [0.0, 20.0]
+        english_name: "Measure 0-20mA"
         relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
