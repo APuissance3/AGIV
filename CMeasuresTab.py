@@ -9,7 +9,7 @@ from CDevicesDriver import get_devices_driver
 from CRangeStatusLayout import CRangeStatusLayout
 from threading import get_ident
 from enum import Enum, unique
-from GlobalVar import database
+from CDBManager import get_database, CDBManager
 
 # Enum for the states of state machine
 class CMeasSt(Enum):
@@ -30,7 +30,8 @@ class CMeasuresTab(QThread):
     # This signal is emited to display messages 
     # argument: message, color, font
     sig_info_message = Signal(object, object, object)
-
+    sig_register_range = Signal(object)
+    sig_register_value =Signal(object,object)
 
     def __init__(self, _parent=None):
         """ parent is the Mainwindow Widget  """
@@ -64,6 +65,7 @@ class CMeasuresTab(QThread):
         self.phmi.pBtRunMeasures.clicked.connect(self.pbt_start_stop_cliqued)
         self.timer.timeout.connect(self.timer_state_machine)
         self.timer.start(500)   # Check state machine every 500mS
+
 
 
 
@@ -195,7 +197,10 @@ class CMeasuresTab(QThread):
         ddriver = get_devices_driver()
         range_data = get_config_ranges()[range_name]
 
-        database.register_range(range_name) # Note the measured range for database
+        #db = get_database()
+        #db.register_range(range_name) # Note the measured range for database
+        
+        self.sig_register_range.emit(range_name)
 
         checker = CCheckRangePoint(range_data)
         for a_point in self.list_measures:
@@ -217,7 +222,8 @@ class CMeasuresTab(QThread):
                 nb_try -= 1 # Try another time
             a_point.update_indicator_color()
             # Register measure in database
-            database.register_measure(val_send, val_read)
+            # db.register_measure(val_send, val_read)
+            self.sig_register_value.emit(val_send, val_read)
             if a_point.check == False:
                 range_status = False
         return range_status

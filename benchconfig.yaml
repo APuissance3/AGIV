@@ -112,7 +112,8 @@ Ranges:
         relays: [0x02, 0x0C]     # V+:C, V-:D
         aoip: "SENSE2:FUNC TCOUPLE;:SENSE2:TC:TYPE T"
         aoip2: "SENSE2:TC:DISP CEL;:SENSE2:TC:RJUN:TYPE INT"
-        giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
+        # giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
+        giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
         measure_on: aoip 
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux du generateur 0..100mV. Ici on controle juste la cohérence des 2 compensations
         calibration_points: [-200.00, 380.0]

@@ -7,11 +7,11 @@ from GivUtilities import get_giv_id
 
 global logger
 global xls_file
-global database
+#global database
 
 logger = CLogger()
 xls_file = CXlsReportGenerator()
-database = CDBManager('AP3reports_rec')
+#database = CDBManager('AP3reports_rec')
 
 global giv_id
 global giv_date

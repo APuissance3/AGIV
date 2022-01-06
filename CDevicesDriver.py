@@ -8,7 +8,7 @@ as a global variable
 from PySide2 import QtCore
 from PySide2.QtGui import QColor
 from CSerialScpiConnexion import *
-
+import re
 #import os       # file i/o for debug combobox
 from Utilities import *
 import time
@@ -111,12 +111,14 @@ class CDevicesDriver(QtCore.QObject):
     def send_giv_cmde_mode(self, cmde):
         retry = 2
         tx = cmde + ";:MODE?"
+        match = re.search(r"MODE (.*?);", tx)
+        req_mode = match.group(1)
         while self.scpi_giv4:   # Don't try if the connection is none
             retry -= 1
             rx = self.scpi_giv4.send_request(tx)
             if self.flg_simulate:
                 return # Abord responce checking
-            if rx in cmde:    # Ok
+            if req_mode in rx:    # It's ok is response contains the requested mode
                 break
             elif retry == 0:
                 raise ConnectionError("Echec de la commande Giv4\n'{}'".format(cmde))

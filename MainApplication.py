@@ -17,7 +17,8 @@ from CConfigFile import CConfigFile, create_config_file_instance, get_config_fil
 from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
-from GlobalVar import logger, xls_file, database
+from GlobalVar import logger, xls_file
+from CDBManager import  initialise_database
 
 
 global AppMW
@@ -136,10 +137,17 @@ if __name__ == "__main__":
         
         sys.exit(1)
 
+    db = initialise_database("AP3reports_rec")
+
     AppMW = MainWindow()
     AppMW.cBoxAdvanced.setChecked(True)
     #  Apply stylesheet file to the MainWindow 
     apply_style(AppMW, "Qt_Style.qrc")
+
+    # Connect Signal to DB: The DB usage is only in one thread
+    # so we use signals to register values in main thread
+    AppMW.cm_tab.sig_register_range.connect(db.register_range)
+    AppMW.cm_tab.sig_register_value.connect(db.register_measure)
 
     AppMW.QTextConsole.append("Starting")
     AppMW.show()
@@ -161,7 +169,7 @@ if __name__ == "__main__":
 
     # Get GIV4 S/N and Set log file according to giv identifiant
     giv_id = get_giv_id(d_drv.scpi_giv4)
-    database.register_giv(giv_id)  # The next records link with this GIV
+    db.register_giv(giv_id)  # The next records link with this GIV
     giv_date = get_giv_caldate(d_drv.scpi_giv4)
     AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
     AppMW.lEIdentifiant.setText("GIV4_Ref_" + giv_id)
