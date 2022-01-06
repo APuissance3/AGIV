@@ -17,7 +17,7 @@ from CConfigFile import CConfigFile, create_config_file_instance, get_config_fil
 from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
-from GlobalVar import logger, xls_file
+from GlobalVar import logger, xls_file, database
 
 
 global AppMW
@@ -157,10 +157,11 @@ if __name__ == "__main__":
                 " le banc.")
         else:
              msg_dialog_Error(d_drv.str_error)
-        exit(1)
+        #  pour lesz test exit(1)
 
     # Get GIV4 S/N and Set log file according to giv identifiant
     giv_id = get_giv_id(d_drv.scpi_giv4)
+    database.register_giv(giv_id)  # The next records link with this GIV
     giv_date = get_giv_caldate(d_drv.scpi_giv4)
     AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
     AppMW.lEIdentifiant.setText("GIV4_Ref_" + giv_id)

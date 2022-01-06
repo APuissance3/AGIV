@@ -7,7 +7,7 @@ REF_DATE = datetime.fromisoformat('2021-01-01')
 
 def get_giv_id(giv_scpi):
     cmd = ":SYST:LOCK:CODE?"
-    rx=""
+    rx = "SIM_000.100"
     if giv_scpi is not None:
         rx = giv_scpi.send_request(cmd)
     return (rx)
@@ -24,7 +24,7 @@ def is_giv_locked(giv_scpi):
 def get_giv_caldate(giv_scpi):
     cmd = ":SYST:ADJ:DATE?"
     rx=""
-    txt_date ='??/??/????'
+    txt_date ='01/01/2000'
     if giv_scpi is not None:
         rx = giv_scpi.send_request(cmd)
         nb_days = int(rx.replace(' ',''))
@@ -33,6 +33,8 @@ def get_giv_caldate(giv_scpi):
     return txt_date
     
 def unlock_giv(giv_scpi):
+    if giv_scpi is None:
+        return "UNLOCK"
     cde = get_giv_id(giv_scpi).replace(' ','').replace('.','')
     cde = int(cde)%1000000
     cde ^= 0x5448

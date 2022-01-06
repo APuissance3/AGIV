@@ -32,7 +32,7 @@ Ranges:
         active: False
 
     "Allume la Led":
-        active: True
+        active: False
         calibrate: False 
         relays: [0x80] 
         aoip: ["SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF",'toto']
@@ -52,7 +52,7 @@ Ranges:
         measure_on: aoip    # The giv is on output mode, the measure is on AOIP
         correction: ":OUT:CUR:ADJ_DAC_"
         calibration_points: [0.1, 23.5]
-        points: [0.0, 2.0] # 4.0,, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
+        points: [0.0, 2.0, 4.0, 8.0, 10.0, 12.0, 16.0, 18.0, 20.0]
         tolerance: [0.05, 0.001]  # 0.05% +/-0.0
 
     "Sortie courant 4-20 mA":
@@ -206,7 +206,7 @@ Ranges:
     "Mesure de tension 0..30V":
         active: True
         calibrate: True
-        english_name: "Voltage measure"
+        english_name: "Voltage measure 0-30V"
         relays: [0x0, 0x0C]     # V+:A, V-:D
         aoip: ":sour:volt:range 50V;:sour:volt 1"
         giv4: ":MODE INPUT_VOLTAGE_030V"
@@ -220,7 +220,7 @@ Ranges:
         active: True
         calibrate: True
         calibration_points: [0.0, 20.0]
-        english_name: "Measure 0-20mA"
+        english_name: "Measure 0-20mA external power"
         relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
@@ -234,6 +234,7 @@ Ranges:
     "Mesure de courrant 0-20 mA Pwr interne":  # Le CALYS ne sait pas coupper la source pour ce cas
         active: False   # Pas possible, on ne fait pas
         relays: [0x00,0x0C,0x10] # V+:A,  V-:B, Pwr 
+        english_name: "Measure 0-20mA Internal power"
         aoip: ":sour:func curr"   
         aoip_out: 'Sour:current {}mA'      # More priority than general command
         giv4: ":MODE INPUT_CURRENT_020MA"

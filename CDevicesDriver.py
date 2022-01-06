@@ -45,6 +45,8 @@ class CDevicesDriver(QtCore.QObject):
     """
     sig_communication_error = Signal(object, object, object)
 
+    flg_simulate = False
+
     def __init__(self, cfg_file, print_funct=None, pw=None):
         """ cfg_file:   config file with data sutch as time-out or communication 
                         characteristics.
@@ -72,7 +74,7 @@ class CDevicesDriver(QtCore.QObject):
         ]
         for (attrib, idn, color, msg, timeout) in devices_properties_list:
             try:
-                scpi = CSerialScpiConnexion(idn, color, timeout)
+                scpi = CSerialScpiConnexion(idn, color, timeout, self.flg_simulate)
                 setattr(self, attrib, scpi) # Store the device
                 if print_funct is not None:
                     self.sig_communication_error.connect(print_funct)
@@ -84,6 +86,8 @@ class CDevicesDriver(QtCore.QObject):
             except ConnectionError:
                 self.str_error = "Pas de connexion " + msg
                 #raise ConnectionError(self.str_error)
+        if self.flg_simulate:
+            self.scpi_giv4 = None   # The other function could work with that
 
         # Go device to remote mode
         if self.scpi_aoip:
@@ -110,6 +114,8 @@ class CDevicesDriver(QtCore.QObject):
         while self.scpi_giv4:   # Don't try if the connection is none
             retry -= 1
             rx = self.scpi_giv4.send_request(tx)
+            if self.flg_simulate:
+                return # Abord responce checking
             if rx in cmde:    # Ok
                 break
             elif retry == 0:
@@ -126,6 +132,9 @@ class CDevicesDriver(QtCore.QObject):
         retry = 3
         tx ="*CLS;"+ cmde + ";:ERR?"
         rx = self.scpi_aoip.send_request(tx, wait_time)
+        if self.flg_simulate:
+            return # Abort responce checking
+
         while True:  # Don't try if the connection is none
             if "No error" in rx:    # Ok
                 break
@@ -158,11 +167,13 @@ class CDevicesDriver(QtCore.QObject):
         # direction of the measure: on Giv or on Aoip
         measure_on = self.range_data['measure_on']
         rx=''
+
+        # Output on GIV, measure on Aoip ---------------
         if 'aoip' in measure_on:
-            # Output on GIV, measure on Aoip
             if self.scpi_giv4:
                 self.scpi_giv4.send_request(giv_out_cmd.format(val))
-
+            if self.flg_simulate:
+                return float(val)+0.001
             # For the AOIP, we repeat the answer until we have a response
             retry = 3
             while retry > 0 and len(rx) == 0: # retry until we have a response 
@@ -171,13 +182,17 @@ class CDevicesDriver(QtCore.QObject):
                 print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
                 rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
             rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
+
+        #  Output on Aoip mesure on Giv  -------------------
         elif 'giv' in measure_on:
-            # Output on Aoip mesure on Giv
             self.send_aoip_cmde(aoip_out_cmd.format(val)) 
             time.sleep(giv_wait_time)
             print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
             if self.scpi_giv4:
                rx = self.scpi_giv4.send_request(giv_meas_cmd)
+            if self.flg_simulate:
+                return float(val)+0.001
+
         try:
             read_val = float(rx.replace(' ',''))   
         except ValueError:
@@ -199,6 +214,8 @@ class CDevicesDriver(QtCore.QObject):
             
 
     def set_bench_relays(self):
+        if self.flg_simulate:
+            return
         relay_cmd = 0   # Binary code send to the bench
         relay_cfg = self.range_data['relays']   # The string with hex code to add
         for rly in relay_cfg:

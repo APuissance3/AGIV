@@ -9,7 +9,7 @@ from CDevicesDriver import get_devices_driver
 from CRangeStatusLayout import CRangeStatusLayout
 from threading import get_ident
 from enum import Enum, unique
-
+from GlobalVar import database
 
 # Enum for the states of state machine
 class CMeasSt(Enum):
@@ -194,6 +194,9 @@ class CMeasuresTab(QThread):
         self.reset()
         ddriver = get_devices_driver()
         range_data = get_config_ranges()[range_name]
+
+        database.register_range(range_name) # Note the measured range for database
+
         checker = CCheckRangePoint(range_data)
         for a_point in self.list_measures:
             if self.state != CMeasSt.wait_measures:
@@ -213,6 +216,8 @@ class CMeasuresTab(QThread):
                     break
                 nb_try -= 1 # Try another time
             a_point.update_indicator_color()
+            # Register measure in database
+            database.register_measure(val_send, val_read)
             if a_point.check == False:
                 range_status = False
         return range_status

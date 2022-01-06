@@ -1,11 +1,18 @@
 # This Python file uses the following encoding: utf-8
-#from PySide2.QtGui import QColor
-#from PyQt5 import QtCore
 from PySide2.QtCore import QObject, Signal
 import time
 import serial, serial.tools.list_ports
 
 from Utilities import SMALL_FONT
+
+
+class CSimulatedPort():
+    def __init__(self) -> None:
+        self.name = "SIMPORT"
+        self.simulated = True
+
+    def close(self):
+        pass
 
 
 
@@ -15,7 +22,9 @@ class CSerialScpiConnexion(QObject):
     """ Class that represent a connection with the requested device.
     Pass the id string requested to the constructor, and the object 
     created get a serial port with the device if it is finded.
-    If not, device_port keep to None value """
+    If not, device_port keep to None value 
+    Last modif: add simulate flag
+    """
 
     # This signal is emited when a request/response is completed
     # argument: message, color, font
@@ -50,20 +59,25 @@ class CSerialScpiConnexion(QObject):
         return dt,str
 
 
-    def __init__(self, id_name, color=None,  time_out=None, parent=None):
+    def __init__(self, id_name, color=None,  time_out=None, simulate=False, parent=None):
         super(CSerialScpiConnexion, self).__init__(parent)
         self.initialise_com_ports() # Buil com port list if it is not make yet
         self.id_string = None
         self.device_port = None
+        self.simulate = simulate
         self.color = color       # Optional color passed to display the exchange in a terminal
         self.time_out = time_out if time_out is not None else 0.5
-        self.try_connect(id_name)
-        self.rx = None
-        # self.tx = None
-        if self.device_port == None:
-            txt = "Can't find the requested device with id = '{}'".format(id_name)
-            raise ConnectionError(txt )
-        self.get_dt()    # Initialise 
+        if not self.simulate:
+            self.try_connect(id_name)
+            self.rx = None
+            # self.tx = None
+            if self.device_port == None:
+                txt = "Can't find the requested device with id = '{}'".format(id_name)
+                raise ConnectionError(txt )
+            self.get_dt()    # Initialise 
+        else:
+            self.rx= id_name
+            self.device_port = CSimulatedPort()
 
     def __del__(self):
         if self.device_port is not None:
@@ -75,11 +89,18 @@ class CSerialScpiConnexion(QObject):
     def send_request(self, str_tx, _sleep=None):
         """ Send a request to the device, and wait for the response.
         Send a signal with the exchange at the the end of a success exchange """
-        self.device_port.flush()
+
         (dt,st1) = self.get_dt()
         msg_tx = st1 + " TX>" + str_tx
         print(msg_tx)
         str_tx += '\n'      # Add the term character to the command
+
+        if self.simulate:   #  We doesnt send and wait
+            msg_rx = st1 + " RX> "
+            self.sigRequestComplete.emit(msg_tx + '\n' + msg_rx, self.color, SMALL_FONT)
+            return ""
+
+        self.device_port.flush()
         self.device_port.write(str_tx.encode())  # encode is required to convert str to byte[]
         sleep = _sleep if _sleep is not None else 0.0  # Use provided sleep if given 
         if (sleep > 0.0):
