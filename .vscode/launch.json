@@ -8,7 +8,8 @@
             "name": "Python : MainApplication.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/MainApplication.py",
+            "program": "${workspaceFolder}/CXlsReportgenerator.py",
+//            "program": "${workspaceFolder}/MainApplication.py",
 //            "program": "${workspaceFolder}/CDBManager.py",
             "console": "integratedTerminal"
         }

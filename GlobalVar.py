@@ -1,8 +1,8 @@
 # This Python file uses the following encoding: utf-8
 """ This file contains the common global variables """
 from CLogger import CLogger
-from CXlsReportgenerator import CXlsReportGenerator
-from CDBManager import CDBManager
+#from CXlsReportgenerator import CXlsReportGenerator
+#from CDBManager import CDBManager#
 from GivUtilities import get_giv_id
 
 global logger
