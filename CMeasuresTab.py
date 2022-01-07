@@ -1,5 +1,7 @@
 # This Python file uses the following encoding: utf-8
+from GivUtilities import get_giv_id
 from Utilities import *
+import os
 
 from CMeasurePoint import CMeasurePoint
 from PySide2.QtCore import Signal, Slot, QThread, QObject, QTimer
@@ -10,6 +12,7 @@ from CRangeStatusLayout import CRangeStatusLayout
 from threading import get_ident
 from enum import Enum, unique
 from CDBManager import get_database, CDBManager
+from XlsReportGenerator import gen_measures_XLSreport, save_XLSreport
 
 # Enum for the states of state machine
 class CMeasSt(Enum):
@@ -63,6 +66,7 @@ class CMeasuresTab(QThread):
         self.phmi.pBtSMeasSelectAll.clicked.connect(self.select_all_range)
         self.phmi.pBtMeasUnselectAll.clicked.connect(self.unselec_all_range)
         self.phmi.pBtRunMeasures.clicked.connect(self.pbt_start_stop_cliqued)
+        self.phmi.pBtGenerateRepport.clicked.connect(self.pbt_repport_cliqued)
         self.timer.timeout.connect(self.timer_state_machine)
         self.timer.start(500)   # Check state machine every 500mS
 
@@ -86,6 +90,16 @@ class CMeasuresTab(QThread):
             self.state = CMeasSt.measures_abort
             pass
     
+    def pbt_repport_cliqued(self):
+        db = get_database() # Get connector opened by MainApplication 
+        gid = get_giv_id()
+        self.phmi.Qmessages_print("Construction du rapport de mesures ...")
+        gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
+        curdir = os.path.abspath(os.getcwd())
+        filename = curdir + "\\Report_{}.xlsx".format(gid)
+        save_XLSreport(filename)        
+        self.phmi.Qmessages_print("OK. Chemin: \n{}".format(filename))
+
     def timer_state_machine(self):
         """ This function is cycliquely called in the main thread. 
         It permits to update Main GUI in the main thread, but 

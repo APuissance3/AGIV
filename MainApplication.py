@@ -17,7 +17,7 @@ from CConfigFile import CConfigFile, create_config_file_instance, get_config_fil
 from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
-from GlobalVar import logger, xls_file
+from GlobalVar import logger
 from CDBManager import  initialise_database
 
 
@@ -64,7 +64,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
     def init_log_name(self, str):
         logger.log_change_name('log_'+str+'.txt')
-        xls_file.set_filename('Report_'+str+'.xlsx')
+        #xls_file.set_filename('Report_'+str+'.xlsx')
 
 
     def Qmessages_print(self, message, 
@@ -140,6 +140,7 @@ if __name__ == "__main__":
     db = initialise_database("AP3reports_rec")
 
     AppMW = MainWindow()
+    AppMW.setWindowTitle("A Puissance 3 - AGIV")
     AppMW.cBoxAdvanced.setChecked(True)
     #  Apply stylesheet file to the MainWindow 
     apply_style(AppMW, "Qt_Style.qrc")
@@ -149,7 +150,7 @@ if __name__ == "__main__":
     AppMW.cm_tab.sig_register_range.connect(db.register_range)
     AppMW.cm_tab.sig_register_value.connect(db.register_measure)
 
-    AppMW.QTextConsole.append("Starting")
+    #AppMW.QTextConsole.append("Starting")
     AppMW.show()
 
     # Connect all the devices with serial port and SCPI protocol
@@ -172,7 +173,7 @@ if __name__ == "__main__":
     db.register_giv(giv_id)  # The next records link with this GIV
     giv_date = get_giv_caldate(d_drv.scpi_giv4)
     AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
-    AppMW.lEIdentifiant.setText("GIV4_Ref_" + giv_id)
+    AppMW.lEIdentifiant.setText("GIV4_Ref_{}".format(giv_id))
     AppMW.lE_DateCalib.setText(giv_date)
 
     # Check if GIV is looked. If Yes, ask to unlock

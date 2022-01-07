@@ -5,12 +5,16 @@ from datetime import datetime, timedelta
 
 REF_DATE = datetime.fromisoformat('2021-01-01')
 
-def get_giv_id(giv_scpi):
-    cmd = ":SYST:LOCK:CODE?"
-    rx = "SIM_000.100"
-    if giv_scpi is not None:
-        rx = giv_scpi.send_request(cmd)
-    return (rx)
+_giv_id = None
+def get_giv_id(giv_scpi=None):
+    global _giv_id
+    if _giv_id == None:
+        cmd = ":SYST:LOCK:CODE?"
+        rx = "SIM_000.100"
+        if giv_scpi is not None:
+            rx = giv_scpi.send_request(cmd).replace(' ','')
+            _giv_id = rx
+    return(_giv_id)
 
 def is_giv_locked(giv_scpi):
     ret = True

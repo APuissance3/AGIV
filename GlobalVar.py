@@ -10,7 +10,7 @@ global xls_file
 #global database
 
 logger = CLogger()
-xls_file = CXlsReportGenerator()
+# xls_file = CXlsReportGenerator()
 #database = CDBManager('AP3reports_rec')
 
 global giv_id

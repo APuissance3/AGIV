@@ -113,7 +113,6 @@ class CDBManager():
         """ register the GIV id and note its primary key 
         to simplifie the next request 
         """
-        giv_id = giv_id.replace(' ','') # Erase spaces
         self.connect()
         #self.cursor = self.connector.cursor()
         sqlcmd = "INSERT INTO GIV_ids (Giv_id) VALUES ('{}');".format(giv_id) 
