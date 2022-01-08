@@ -1,6 +1,14 @@
 # This Python file uses the following encoding: utf-8
-from PySide2.QtWidgets import QSpacerItem, QCheckBox, QHBoxLayout, QWidget
+from PySide2.QtWidgets import QSpacerItem, QCheckBox, QHBoxLayout, QWidget 
+from PySide2 import QtCore
 from PySide2.QtCore import Signal
+"""
+   class CheckState(object):
+        Unchecked                : Qt.CheckState = ... # 0x0
+        PartiallyChecked         : Qt.CheckState = ... # 0x1
+        Checked                  : Qt.CheckState = ... # 0x2
+"""
+
 
 class CRangeStatusLayout(object):
     """ 
@@ -17,8 +25,13 @@ class CRangeStatusLayout(object):
         lim = "'"+text+"'"
         self.cBoxSel = QCheckBox(text)
         self.cBoxSel.setMinimumSize(320,0)
-        self.cBoxSel.setChecked(True)
-        self.cBoxStatus = QCheckBox(" -- ")
+        self.cBoxStatus = QCheckBox(" --- ")
+        self.cBoxStatus.setTristate(True)
+        self.cBoxStatus.setStyleSheet(  "QCheckBox::indicator { width: 17px; height: 17px;}"
+                                        "QCheckBox::indicator::unchecked {image: url(icons/led-red-on.png);}"
+                                        "QCheckBox::indicator::indeterminate {image: url(icons/led-gray.png);}"
+                                        "QCheckBox::indicator:checked {image: url(icons/led-green-on.png);}"
+        )
         self.hLayout = QHBoxLayout()
         self.hLayout.addWidget(self.cBoxStatus)
         self.hLayout.addWidget(self.cBoxSel)
@@ -34,6 +47,16 @@ class CRangeStatusLayout(object):
 
     def update_indicator_color(self):
         if self.cal_status == True:
+            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.Checked)
+            self.cBoxStatus.setText(" OK ")
+        elif self.cal_status == False:
+            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            self.cBoxStatus.setText(" Ko ")
+        else:
+            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+            self.cBoxStatus.setText(" -- ")
+        return
+        if self.cal_status == True:
             self.cBoxStatus.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
             self.cBoxStatus.setText(" OK ")
         elif self.cal_status == False:
@@ -41,6 +64,8 @@ class CRangeStatusLayout(object):
             self.cBoxStatus.setText(" Ko ")
         else:
             self.cBoxStatus.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
+            #self.cBoxStatus.setStyleSheet("QCheckBox::indicator:unchecked {image: url(:icons/blue-led-on.png);}")
+            
             self.cBoxStatus.setText(" -- ")
 
     def cBoxCliqued(self, cBox):

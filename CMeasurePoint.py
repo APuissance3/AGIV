@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 import os
 
+from PySide2 import QtCore
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -19,6 +20,12 @@ class CMeasurePoint(object):
         self.check_value = "{:> 7.1F}".format(point_value)
         self.hiew = QHBoxLayout()
         self.vled = QCheckBox(self.check_value)
+        self.vled.setTristate(True)
+        self.vled.setStyleSheet(  "QCheckBox::indicator { width: 17px; height: 17px;}"
+                                    "QCheckBox::indicator::unchecked {image: url(icons/led-red-on.png);}"
+                                    "QCheckBox::indicator::indeterminate {image: url(icons/led-gray.png);}"
+                                    "QCheckBox::indicator:checked {image: url(icons/led-green-on.png);}"
+        )
         self.vled.setGeometry(100,100,600,400)
         self.update_indicator_color()
         self.hiew.addWidget(self.vled)
@@ -43,11 +50,14 @@ class CMeasurePoint(object):
 
     def update_indicator_color(self):
         if self.check == True:
-            self.vled.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
+            self.vled.setCheckState(QtCore.Qt.CheckState.Checked)
+            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
         elif self.check == False:
-            self.vled.setStyleSheet("QCheckBox::indicator {background-color : red;}")
+            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : red;}")
         else:
-            self.vled.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
+            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
 
  
     def setupUi(self, MainWindow):

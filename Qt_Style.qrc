@@ -29,3 +29,19 @@ max-width: 200px;
 min-height: 20px;
 max-height: 25px;
 }
+
+
+/*  Ca marche mais partout
+QCheckBox::indicator {
+    width: 13px;
+    height: 13px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(icons/blue-led-on.png);
+}
+
+QCheckBox::indicator:checked {
+    image: url(icons/led-red-on.png);
+}
+*/
