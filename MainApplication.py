@@ -103,6 +103,18 @@ class MainWindow(QtWidgets.QMainWindow,
             self.cBoxRazCalib.setEnabled(False)
             self.cBoxRazCalib.setChecked(True)
 
+    def force_unlock_giv(self):
+        self.Qmessages_print("Déverrouillage du GIV par l'utilisateur", q_orange_color)
+        d_drv= get_devices_driver()
+        unlock_giv(d_drv.scpi_giv4)
+
+    def force_lock_giv(self):
+        if msg_dialog_confirm("Etes-vous sur de vouloir verouiller la calibration du  GIV ?",
+             "Verouillage") == True:
+            self.Qmessages_print("Verrouillage du GIV par l'utilisateur", q_orange_color)
+            d_drv= get_devices_driver()
+            lock_giv(d_drv.scpi_giv4)
+
 # --------  End of MainWindow definition -----------------------
 
 
@@ -149,6 +161,9 @@ if __name__ == "__main__":
     # so we use signals to register values in main thread
     AppMW.cm_tab.sig_register_range.connect(db.register_range)
     AppMW.cm_tab.sig_register_value.connect(db.register_measure)
+    # Lock and unlock buttons on advanced panel
+    AppMW.pBtAdvLockGiv.clicked.connect(AppMW.force_lock_giv)
+    AppMW.pBtAdvUnlockGiv.clicked.connect(AppMW.force_unlock_giv)
 
     #AppMW.QTextConsole.append("Starting")
     AppMW.show()
@@ -180,7 +195,7 @@ if __name__ == "__main__":
     giv_lock = is_giv_locked(d_drv.scpi_giv4)
     
     # For debug, we unlock systematiquely
-    if giv_lock:
+    if False and giv_lock:
         unlock_giv(d_drv.scpi_giv4)
         giv_lock = False
 
