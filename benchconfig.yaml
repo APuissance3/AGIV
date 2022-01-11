@@ -17,6 +17,8 @@ Titre: "BANC DE TEST AGIV "
 # R hom -: x40
 # 
 
+Options:
+    advanced: True   # Enable Adanced panel
 
 Commands:
     aoip_mes: 'MEAS2?'

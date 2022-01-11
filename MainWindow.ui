@@ -30,7 +30,7 @@
      <rect>
       <x>96</x>
       <y>10</y>
-      <width>631</width>
+      <width>761</width>
       <height>51</height>
      </rect>
     </property>
@@ -113,7 +113,7 @@
       <property name="geometry">
        <rect>
         <x>570</x>
-        <y>210</y>
+        <y>120</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -125,7 +125,7 @@
        <string/>
       </property>
       <property name="text">
-       <string>LANCER SELECTION</string>
+       <string>LANCER AJUSTAGE</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pBtSelectAll">
@@ -164,7 +164,7 @@
       <property name="geometry">
        <rect>
         <x>580</x>
-        <y>110</y>
+        <y>310</y>
         <width>171</width>
         <height>21</height>
        </rect>
@@ -186,7 +186,7 @@
       <property name="geometry">
        <rect>
         <x>580</x>
-        <y>150</y>
+        <y>340</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -208,7 +208,7 @@
       <property name="geometry">
        <rect>
         <x>570</x>
-        <y>270</y>
+        <y>170</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -337,7 +337,7 @@
        <string/>
       </property>
       <property name="text">
-       <string>LANCER SELECTION</string>
+       <string>LANCER MESURES</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_5">
@@ -509,7 +509,7 @@
        </font>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBtLockGiv_2">
+     <widget class="QPushButton" name="pBtAdvLockGiv">
       <property name="geometry">
        <rect>
         <x>760</x>
@@ -522,7 +522,7 @@
        <string>LOCK GIV</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBtUnlock_Giv">
+     <widget class="QPushButton" name="pBtAdvUnlockGiv">
       <property name="geometry">
        <rect>
         <x>760</x>

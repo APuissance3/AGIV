@@ -45,7 +45,7 @@ class CDevicesDriver(QtCore.QObject):
     """
     sig_communication_error = Signal(object, object, object)
 
-    flg_simulate = True
+    flg_simulate = False
 
     def __init__(self, cfg_file, print_funct=None, pw=None):
         """ cfg_file:   config file with data sutch as time-out or communication 

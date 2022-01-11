@@ -53,10 +53,10 @@ class CMeasurePoint(object):
             self.vled.setCheckState(QtCore.Qt.CheckState.Checked)
             #self.vled.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
         elif self.check == False:
-            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.Unchecked)
+            self.vled.setCheckState(QtCore.Qt.CheckState.Unchecked)
             #self.vled.setStyleSheet("QCheckBox::indicator {background-color : red;}")
         else:
-            self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
+            self.vled.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
             #self.vled.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
 
  

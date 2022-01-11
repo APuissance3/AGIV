@@ -158,6 +158,9 @@ class CCalibrateTab(QThread):
         self.vCalibrateLayout = createVLayerForScroll(self.phmi.scrollCalibrate)
         self.cal_range_list = []
         self.running = False
+        
+        # Hide Lock button: Lock is automatic if all the ranges are ok
+        self.phmi.pBtLockGiv.setVisible(False)  
 
         flg_overwrite = True if parent.cBoxRazCalib.isChecked() else False
 
@@ -180,6 +183,7 @@ class CCalibrateTab(QThread):
         self.phmi.pBtUnselectAll.clicked.connect(self.unselec_all_range)
         self.phmi.pBtRunCalibration.clicked.connect(self.pBt_run_clicked)
         self.phmi.pBtLockGiv.clicked.connect(self.lock_giv)
+        self.select_all_range()
 
 
     def select_all_range(self):
@@ -194,7 +198,7 @@ class CCalibrateTab(QThread):
     def pBt_run_clicked(self):
         if not self.running:
             self.running = True
-            self.phmi.pBtRunCalibration.setText("ARRET CALIBRATION")
+            self.phmi.pBtRunCalibration.setText("ARRET AJUSTAGE")
             if self.phmi.cBoxMultithread.isChecked():
                 self.start()      # Start the run method in another thread
             else:
@@ -202,19 +206,21 @@ class CCalibrateTab(QThread):
         else:
             self.terminate()
             self.wait()
-            self.sig_info_message.emit("Calibration interrompue par l'utilisateur", q_red_color, None)
+            self.sig_info_message.emit("Ajustage interrompu par l'utilisateur", q_red_color, None)
             self.end_of_calibration()
 
     def end_of_calibration(self):
         all_ok = True
         self.running = False
-        self.phmi.pBtRunCalibration.setText("LANCER CALIBRATION")
+        self.phmi.pBtRunCalibration.setText("LANCER AJUSTAGE")
         for (cal_view, cal_values) in self.cal_range_list:
             if cal_view.cal_status != True:
                 all_ok = False
                 break
         print("All ok: {}".format(all_ok))
-        self.phmi.pBtLockGiv.setEnabled(True)
+        if all_ok:
+            self.sig_info_message.emit("Ajustage terminé ok. Verouillage du GIV",
+                    q_orange_color, None)
 
   
     def lock_giv(self):

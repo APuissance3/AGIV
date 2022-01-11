@@ -63,6 +63,7 @@ class CMeasuresTab(QThread):
                 meas_range_view = CRangeStatusLayout(range, range_data, self.phmi)    # Create the object
                 self.vRangesLayout.addLayout(meas_range_view.hLayout)
                 self.list_ranges.append(meas_range_view)
+        self.select_all_range()
         self.phmi.pBtSMeasSelectAll.clicked.connect(self.select_all_range)
         self.phmi.pBtMeasUnselectAll.clicked.connect(self.unselec_all_range)
         self.phmi.pBtRunMeasures.clicked.connect(self.pbt_start_stop_cliqued)

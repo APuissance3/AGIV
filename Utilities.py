@@ -15,6 +15,7 @@ SMALL_FONT = 10.0
 q_red_color = QColor('red') 
 q_green_color = QColor('green') 
 q_black_color = QColor('black') 
+q_orange_color = QColor(0xF76E04)
 
 def msg_dialog_Error(strmessage, strmess2=None, strmess3=None):
     msg = QMessageBox()
@@ -27,6 +28,15 @@ def msg_dialog_Error(strmessage, strmess2=None, strmess3=None):
     msg.setWindowTitle("Erreur Banc de test AGIV")
     msg.setStandardButtons(QMessageBox.Ok)
     ret = msg.exec_()
+
+def msg_dialog_confirm(strmessage, title):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Question)
+    msg.setText(strmessage)
+    msg.setWindowTitle(title)
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    ret = msg.exec_()
+    return (ret == QMessageBox.Yes)
 
 
 
