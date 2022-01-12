@@ -153,7 +153,20 @@ if __name__ == "__main__":
 
     AppMW = MainWindow()
     AppMW.setWindowTitle("A Puissance 3 - AGIV")
-    AppMW.cBoxAdvanced.setChecked(True)
+
+
+    #Enable for Debug by default
+    #AppMW.cBoxAdvanced.setChecked(True)
+
+    #Enable or disable advanced Tab function og advanced flag in the config file
+    options= cfg_object.config['Options']
+    enable_avanced = options['advanced']
+    AppMW.tabWidget.setTabEnabled(2, enable_avanced)
+    if not enable_avanced:
+        AppMW.cBoxAdvanced.setChecked(False)
+    AppMW.change_advanced_mode()
+
+
     #  Apply stylesheet file to the MainWindow 
     apply_style(AppMW, "Qt_Style.qrc")
 
@@ -161,6 +174,9 @@ if __name__ == "__main__":
     # so we use signals to register values in main thread
     AppMW.cm_tab.sig_register_range.connect(db.register_range)
     AppMW.cm_tab.sig_register_value.connect(db.register_measure)
+    AppMW.cc_tab.sig_register_range.connect(db.register_range)
+    AppMW.cc_tab.sig_register_value.connect(db.register_ajustments)
+    
     # Lock and unlock buttons on advanced panel
     AppMW.pBtAdvLockGiv.clicked.connect(AppMW.force_lock_giv)
     AppMW.pBtAdvUnlockGiv.clicked.connect(AppMW.force_unlock_giv)
@@ -183,10 +199,16 @@ if __name__ == "__main__":
              msg_dialog_Error(d_drv.str_error)
         #  pour lesz test exit(1)
 
+    # Get Calibrator datas and register it into DB
+    if d_drv.scpi_aoip is not None:
+        aoip_data = d_drv.get_aoip_datas()
+        db.register_Aoip_in_DB(aoip_data)
+
     # Get GIV4 S/N and Set log file according to giv identifiant
     giv_id = get_giv_id(d_drv.scpi_giv4)
     db.register_giv(giv_id)  # The next records link with this GIV
-    giv_date = get_giv_caldate(d_drv.scpi_giv4)
+    (giv_date, db_giv_date) = get_giv_caldate(d_drv.scpi_giv4)
+    db.register_giv_last_cal_date(db_giv_date) # Register the Lock date
     AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
     AppMW.lEIdentifiant.setText("GIV4_Ref_{}".format(giv_id))
     AppMW.lE_DateCalib.setText(giv_date)

@@ -18,7 +18,7 @@ def save_XLSreport(fname):
     if wb is not None:
         wb.save(fname)
 
-def _gen_worksheet_header(my_ws, date, giv_id):
+def _gen_worksheet_header(my_ws, date, giv_id, aoip, aoipsn, aoipcal):
     # Add title to the Sheet
     my_ws['B3'] = "Measurements records"
     my_ws.merge_cells('B3:E3')
@@ -28,33 +28,35 @@ def _gen_worksheet_header(my_ws, date, giv_id):
     my_ws.column_dimensions['B'].width = 20
     my_ws.column_dimensions['C'].width = 20
     my_ws.column_dimensions['D'].width = 20
-    my_ws['A5'] = "Records date:"
-    my_ws['C5'] = date
-    my_ws['A6'] = "GIV Id:"
-    my_ws['C6'] = giv_id
-    my_ws['A6'] = "GIV calibration date:"
-    my_ws['C6'] = "Unknown"
+    my_ws['A5'] = "Records date:"; my_ws['C5'] = date
+    my_ws['A6'] = "GIV Id:"; my_ws['C6'] = giv_id
+    my_ws['A6'] = "GIV calibration date:"; my_ws['C6'] = "Unknown"
+    my_ws['A7'] = "Calibrator"; my_ws['C7'] = aoip
+    my_ws['A8'] = "Serial no:"; my_ws['C8'] = aoipsn
+    my_ws['A9'] = "Next calibration:"; my_ws['C9'] = ""
+
+
 
 
 def gen_measures_XLSreport(giv_id, db_object):
     global wb
-    last_sheet = None
-
+    last_ws = None
     wb = Workbook()
     db_object.connect()
     db_object.register_giv(giv_id)
-    
+
     dates = db_object.get_dates_of_measures_for_registrered_Giv()
 
     # Loop for each awailable day: make one sheet by day
     for date in dates:  # Loop on the returned records
         sh_name = "Meas_{}".format(date[0])
-        wb.create_sheet(sh_name)
-        my_ws = wb[sh_name]
-        last_sheet = sh_name
-        _gen_worksheet_header(my_ws, date[0], giv_id)     # Generate header 
+        my_ws = wb.create_sheet(sh_name)
+        last_ws = wb[sh_name]
+        #Get registered AOIP at this date  
+        (aoip,aoipsn,aoipcal) = db_object.get_aoip_info(date[0])        
+        _gen_worksheet_header(my_ws, date[0], giv_id, aoip, aoipsn, aoipcal)     # Generate header 
 
-        row_ctn = 9
+        row_ctn = 12
         # Loop on all awailable ranges
         ranges_rec = db_object.get_ranges_of_measures_by_date_for_registrered_Giv(date[0])
         for a_range in ranges_rec:
@@ -82,8 +84,7 @@ def gen_measures_XLSreport(giv_id, db_object):
                 cm.number_format = u'#0.0000'
                 row_ctn += 1
             row_ctn += 1
-    #my_sheet = report.wb.get_sheet_by_name()
-    wb.active=2
+    wb.active = last_ws     # Activate the last worsheet
     db_object.close()
 
 

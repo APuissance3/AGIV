@@ -12,7 +12,7 @@ from CRangeStatusLayout import CRangeStatusLayout
 from CCheckRangePoint import CCheckRangePoint
 from GlobalVar import logger
 from GivUtilities import lock_giv
-
+from CDBManager import get_database
 
 # If True: measure Z two time, more long but more shure
 # if False: Z adjusted only by calculation of the 2 first measures
@@ -25,11 +25,13 @@ class CCalibrationValues(QObject):
     """
     # Same name as child class
     sig_CCalibVal_Message = Signal(object, object, object)
+
   
     def __init__(self, range_name, range_data, flg_overwrite, parent=None ) -> None:
         super(CCalibrationValues, self).__init__()
         self.range_name = range_name
         self.range_data = range_data
+        self.parent = parent
         self.x = range_data['calibration_points']  #  x coordonates of the calibration points
         self.y = [None] * 2     #  y coordonates readed values for x inputs
         self.res = [None] * 2   #  True if the y measure is in tolerance range
@@ -101,6 +103,7 @@ class CCalibrationValues(QObject):
         self.dev_b = self.y[0] - self.x[0]
         self.new_z = self.dev_z - ((self.y[0] - self.x[0]) / self.z_factor)
         self.cmd_adjust_param('Z', self.new_z)
+        self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
         self.check_calibration()
 
     def check_calibration(self):
@@ -108,12 +111,14 @@ class CCalibrationValues(QObject):
         #self.message = None
         logger.log_operation('Check range "{}"'.format(self.range_name))
         self.devices.go_config(self.range_name)
+        self.parent.sig_register_range.emit(self.range_name)
 
         # Adjustement is not awailable for this range
         if not 'none' in self.range_data['correction'].lower():   
             self.sig_CCalibVal_Message.emit("Lecture reglages G et Z", q_green_color, INFO_FONT )
             self.dev_z = self.cmd_adjust_param('Z?')
             self.dev_g = self.cmd_adjust_param('G?')
+            self.parent.sig_register_value.emit(self.dev_z, self.dev_g, False) # Register read values
         else:
             self.dev_z = 0.0 ;  self.dev_g = 1.0
             
@@ -149,6 +154,8 @@ class CCalibrateTab(QThread):
     # This signal is emited to display messages 
     # argument: message, color, font
     sig_info_message = Signal(object, object, object)
+    sig_register_range = Signal(object)
+    sig_register_value = Signal(object,object,object)
 
 
     def __init__(self, parent =None):
@@ -173,7 +180,7 @@ class CCalibrateTab(QThread):
                     cal_view = CRangeStatusLayout(range, range_data, self.phmi)    # Create the object
                     self.vCalibrateLayout.addLayout(cal_view.hLayout)
                     # cal_values is the two point of calibration and methods to calibrate
-                    cal_values = CCalibrationValues( range, range_data, flg_overwrite)
+                    cal_values = CCalibrationValues( range, range_data, flg_overwrite, self)
                     cal_values.sig_CCalibVal_Message.connect(parent.Qmessages_print)
                     # We append in the list the Hlayer and the associated calibration points
                     self.cal_range_list.append((cal_view, cal_values))
@@ -199,6 +206,8 @@ class CCalibrateTab(QThread):
         if not self.running:
             self.running = True
             self.phmi.pBtRunCalibration.setText("ARRET AJUSTAGE")
+            db = get_database()
+            db.register_now_cal_date()  # Add this date to DB
             if self.phmi.cBoxMultithread.isChecked():
                 self.start()      # Start the run method in another thread
             else:
@@ -221,8 +230,9 @@ class CCalibrateTab(QThread):
         if all_ok:
             self.sig_info_message.emit("Ajustage terminé ok. Verouillage du GIV",
                     q_orange_color, None)
-
+            self.lock_giv()
   
+
     def lock_giv(self):
         giv_scpi = get_devices_driver().scpi_giv4
         rx = lock_giv(giv_scpi)

@@ -68,6 +68,7 @@ class CMeasuresTab(QThread):
         self.phmi.pBtMeasUnselectAll.clicked.connect(self.unselec_all_range)
         self.phmi.pBtRunMeasures.clicked.connect(self.pbt_start_stop_cliqued)
         self.phmi.pBtGenerateRepport.clicked.connect(self.pbt_repport_cliqued)
+        # self.phmi.pBtGenerateRepport.connect(self.pbt_repport_left_click)  Not exist, must build a specific button if needed 
         self.timer.timeout.connect(self.timer_state_machine)
         self.timer.start(500)   # Check state machine every 500mS
 
@@ -98,8 +99,21 @@ class CMeasuresTab(QThread):
         gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
         curdir = os.path.abspath(os.getcwd())
         filename = curdir + "\\Report_{}.xlsx".format(gid)
-        save_XLSreport(filename)        
-        self.phmi.Qmessages_print("OK. Chemin: \n{}".format(filename))
+        #strlink = '<a href="{}>the file</a>"'.format(filename)
+        try:
+            save_XLSreport(filename)        
+            # self.phmi.QTextConsole.insertHtml(strlink)
+            self.phmi.Qmessages_print("OK. Chemin: \n" + filename)
+        except PermissionError:
+            self.phmi.Qmessages_print("KO. Creation impossible.\n"\
+                        "Fermez le fichier rapport précédent.", color = q_red_color)
+
+    def pbt_repport_left_click(self):
+        """ Open the report file. Unfortunately, there is no leftclick signal on QT """
+        curdir = os.path.abspath(os.getcwd())
+        filename = curdir + "\\Report_{}.xlsx".format(get_giv_id())
+        os.startfile(filename, 'open')
+
 
     def timer_state_machine(self):
         """ This function is cycliquely called in the main thread. 
@@ -211,10 +225,6 @@ class CMeasuresTab(QThread):
         self.reset()
         ddriver = get_devices_driver()
         range_data = get_config_ranges()[range_name]
-
-        #db = get_database()
-        #db.register_range(range_name) # Note the measured range for database
-        
         self.sig_register_range.emit(range_name)
 
         checker = CCheckRangePoint(range_data)

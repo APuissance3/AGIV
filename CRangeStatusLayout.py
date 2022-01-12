@@ -2,12 +2,6 @@
 from PySide2.QtWidgets import QSpacerItem, QCheckBox, QHBoxLayout, QWidget 
 from PySide2 import QtCore
 from PySide2.QtCore import Signal
-"""
-   class CheckState(object):
-        Unchecked                : Qt.CheckState = ... # 0x0
-        PartiallyChecked         : Qt.CheckState = ... # 0x1
-        Checked                  : Qt.CheckState = ... # 0x2
-"""
 
 
 class CRangeStatusLayout(object):
@@ -56,17 +50,6 @@ class CRangeStatusLayout(object):
             self.cBoxStatus.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
             self.cBoxStatus.setText(" -- ")
         return
-        if self.cal_status == True:
-            self.cBoxStatus.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
-            self.cBoxStatus.setText(" OK ")
-        elif self.cal_status == False:
-            self.cBoxStatus.setStyleSheet("QCheckBox::indicator {background-color : red;}")
-            self.cBoxStatus.setText(" Ko ")
-        else:
-            self.cBoxStatus.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
-            #self.cBoxStatus.setStyleSheet("QCheckBox::indicator:unchecked {image: url(:icons/blue-led-on.png);}")
-            
-            self.cBoxStatus.setText(" -- ")
 
     def cBoxCliqued(self, cBox):
         # Emits signal with the range name 

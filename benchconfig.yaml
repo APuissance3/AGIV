@@ -18,7 +18,7 @@ Titre: "BANC DE TEST AGIV "
 # 
 
 Options:
-    advanced: True   # Enable Adanced panel
+    advanced: True   # Enable Adanced tab  panel
 
 Commands:
     aoip_mes: 'MEAS2?'
@@ -119,7 +119,7 @@ Ranges:
         measure_on: aoip 
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux du generateur 0..100mV. Ici on controle juste la cohérence des 2 compensations
         calibration_points: [-200.00, 380.0]
-        points: [-200.0, 0.0, 100.0, 400.0]
+        points: [-200.0, 0.0, 100.0, 395.0]
         tolerance: [0.05, 2.0]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
 
 

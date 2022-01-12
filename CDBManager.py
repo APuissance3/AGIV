@@ -7,6 +7,7 @@ import os
 #from GlobalVar import *
 from CConfigFile import create_config_file_instance, get_config_ranges
 from Utilities import *
+from datetime import date
 
 
 
@@ -16,6 +17,16 @@ from Utilities import *
 SQL_TABLE_GIV_IG =  f'CREATE TABLE  IF NOT EXISTS GIV_ids ('\
                     f'`Key_id` INTEGER NOT NULL UNIQUE,'\
                     f'`Giv_id` TEXT UNIQUE,'\
+                    f'PRIMARY KEY (`Key_id`) );'
+
+SQL_TABLE_CALIBRATOR_DATA = f'CREATE TABLE  IF NOT EXISTS Calibrator_info ('\
+                    f'`Key_id` INTEGER NOT NULL UNIQUE,'\
+                    f'Name TEXT,'\
+                    f'SN TEXT,'\
+                    f'Cal_Date TEXT,'\
+                    f'Meas_Date TEXT,'\
+                    f'Cal_report TEXT, '\
+                    f'UNIQUE (`SN`,`Cal_Date`, Meas_Date) ON CONFLICT IGNORE,'\
                     f'PRIMARY KEY (`Key_id`) );'
 
 SQL_TABLE_RANGES =  f'CREATE TABLE  IF NOT EXISTS Ranges ('\
@@ -28,9 +39,11 @@ SQL_TABLE_RANGES =  f'CREATE TABLE  IF NOT EXISTS Ranges ('\
 # Date type: Lock or Record (calibration or measurement)
 SQL_TABLE_DATES =   f'CREATE TABLE  IF NOT EXISTS RecDates ('\
                     f'`Key_id` INTEGER NOT NULL UNIQUE,'\
-                    f'`Date` INTEGER,'\
+                    f'`Date` TEXT,'\
                     f'`Type` TEXT,'\
+                    f'UNIQUE (`Date`,`Type`) ON CONFLICT IGNORE,'\
                     f'PRIMARY KEY (`Key_id`) );'
+                    
 
 SQL_TABLE_CALIB_PARAM =   f'CREATE TABLE  IF NOT EXISTS Calib_params ('\
                     f'`Giv_ref` INTEGER,'\
@@ -38,6 +51,7 @@ SQL_TABLE_CALIB_PARAM =   f'CREATE TABLE  IF NOT EXISTS Calib_params ('\
                     f'`Range_ref` INTEGER,'\
                     f'`offset` REAL,'\
                     f'`gain` REAL,'\
+                    f'`Date_rec` TEXT,'\
                     f'FOREIGN KEY(`Giv_ref`) REFERENCES GIV_ids(`Key_id`)'\
                     f'FOREIGN KEY(`Date_ref`) REFERENCES RecDates(`Key_id`)'\
                     f'FOREIGN KEY(`Range_ref`) REFERENCES Ranges(`Key_id`)'\
@@ -91,6 +105,9 @@ class CDBManager():
         # Attributes specifics to the schema of the database
         self.giv_key = None # key_id of Actual selected GIV
         self.range_key = None # key_id of Actual range
+        self.newcaldate = None # Actual date Key_id that we adjust GIV
+        self.lockdate = None # Registered date of the last calibration in the GIV
+
 
     def connect(self):
         if self.connector is not None: # Already connected
@@ -108,6 +125,32 @@ class CDBManager():
         self.connector.close()
         self.connector = None
     
+    def register_Aoip_in_DB(self, *aoip_datas):
+        """ register AOIP datas with the actual date and S/N for key """
+        self.connect()
+        #self.cursor = self.connector.cursor()
+        sqlcmd = "INSERT OR IGNORE INTO Calibrator_info (Meas_Date, Name, SN, Cal_Date, Cal_report)"\
+                    "VALUES (date('now'), '{}','{}','{}','{}');".format(
+                        aoip_datas[0][0],
+                        aoip_datas[0][1],
+                        aoip_datas[0][2],
+                        aoip_datas[0][3]                     
+                    )
+
+        cur = self.connector.execute(sqlcmd)
+        self.connector.commit()                     
+
+    def get_aoip_info(self, date):        
+        """ Get info for the AOIP registered at the date """
+        ret =('Unknown','N/A','N/A')
+        sqlcmd = "SELECT Name, SN, Cal_Date FROM Calibrator_info WHERE Meas_Date == '{}';"\
+                    .format(date)
+        curs = self.cursor.execute(sqlcmd)
+        res = curs.fetchone()
+        if res is not None and len(res)>0:
+            ret =  (res[0],res[1],res[2])
+        return ret
+        
 
     def register_giv(self, giv_id):
         """ register the GIV id and note its primary key 
@@ -115,14 +158,43 @@ class CDBManager():
         """
         self.connect()
         #self.cursor = self.connector.cursor()
-        sqlcmd = "INSERT INTO GIV_ids (Giv_id) VALUES ('{}');".format(giv_id) 
-        #self.cursor.execute(sqlcmd)
-        self.exec_insert_ignore_unique(sqlcmd)
+        sqlcmd = "INSERT OR IGNORE INTO GIV_ids (Giv_id) VALUES ('{}');".format(giv_id) 
+        self.cursor.execute(sqlcmd)
+        #self.exec_insert_ignore_unique(sqlcmd)
         self.connector.commit()
         sqlcmd = "SELECT Key_id FROM GIV_ids WHERE GIV_id = '{}';".format(giv_id)
         cur = self.connector.execute(sqlcmd)
         self.giv_key = cur.fetchone()[0]
         print ("Giv key:{}".format(self.giv_key ))
+
+    def register_giv_last_cal_date(self, date):
+        """ Add the calibration date of the GIV 
+        and get this Key_id 
+        """
+        self.connect()
+        sqlcmd = "INSERT OR IGNORE INTO RecDates (Date, Type) "\
+                    "VALUES ('{}','LOCK');".format(date) 
+        curs = self.cursor.execute(sqlcmd)
+        self.connector.commit()
+        sqlcmd = " SELECT Key_id FROM RecDates WHERE Date == '{}' AND Type='LOCK';".format(date)
+        curs = self.cursor.execute(sqlcmd)
+        res = curs.fetchone()
+        self.lockdate = res[0]
+        
+    def register_now_cal_date(self):
+        """ Add the actual calibration date of the GIV 
+        """
+        self.connect()
+        sqlcmd = "INSERT OR IGNORE INTO RecDates (Date, Type) "\
+                    "VALUES (date('now'),'MEAS');"
+        curs = self.cursor.execute(sqlcmd)
+        self.connector.commit()
+        sqlcmd = "SELECT Key_id FROM RecDates WHERE Date == '{}' AND Type ='MEAS';"\
+                    .format(date.today().strftime('%Y-%m-%d'))
+        curs = self.cursor.execute(sqlcmd)
+        res = curs.fetchone()
+        self.newcaldate = res[0]
+
 
 
     def register_range(self, range_name):
@@ -141,6 +213,16 @@ class CDBManager():
         self.connect()
         sqlcmd = "INSERT INTO Measure_points (Giv_ref, Date_meas, Range_ref, Ref_val, Meas_val) VALUES("\
                  "{}, datetime('now'), {}, {}, {});".format(self.giv_key, self.range_key, ref, meas)
+        res = self.connector.execute(sqlcmd)
+        self.connector.commit()
+
+    def register_ajustments(self, offset, gain, flg_wr=False):
+        """ register Z and G for a range 
+        """
+        self.connect()
+        date_key = self.newcaldate if flg_wr else self.lockdate
+        sqlcmd = "INSERT INTO Calib_params (Giv_ref, Date_ref, Range_ref, offset, gain, Date_rec) VALUES("\
+                 "{}, {}, {}, {:.06f}, {:.06f}, Datetime('now'));".format(self.giv_key, date_key, self.range_key, offset, gain)
         res = self.connector.execute(sqlcmd)
         self.connector.commit()
 
@@ -202,20 +284,19 @@ class CDBManager():
             # Check for 'active' and 'calibrate' key if exist
             if 'active' in range_data and range_data['active']:
                 to_cal= 1 if 'calibrate' in range_data and range_data['calibrate'] else 0
-                sql = "INSERT INTO `Ranges` (Gamme, Range, To_calibrate) VALUES"\
+                sql = "INSERT OR IGNORE INTO `Ranges` (Gamme, Range, To_calibrate) VALUES"\
                       "( '{}', '{}', {} );".format(range, range_data['english_name'], to_cal) 
 
                 self.exec_insert_ignore_unique(sql)
-        sql = "INSERT INTO GIV_ids (Giv_id) VALUES ('GIV_000.001');"
-        self.exec_insert_ignore_unique(sql)
         self.connector.commit()
 
 
     def build_database(self):
         self.connect()
         self.cursor.execute(SQL_TABLE_GIV_IG)   # Create Giv_id
+        self.cursor.execute(SQL_TABLE_CALIBRATOR_DATA )    # Create calibrator info
         self.cursor.execute(SQL_TABLE_RANGES)   # Create Ranges
-        #self.cursor.execute(SQL_TABLE_DATES)    # Create Dates
+        self.cursor.execute(SQL_TABLE_DATES)    # Create Dates
         self.cursor.execute(SQL_TABLE_CALIB_PARAM)    # Create Dates
         self.cursor.execute(SQL_TABLE_MEASURES)    # Create Dates
         self.connector.commit()

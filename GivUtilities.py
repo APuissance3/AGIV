@@ -23,6 +23,8 @@ def is_giv_locked(giv_scpi):
         rx = giv_scpi.send_request(cmd)
         # If 'UNlocked' return False
         if 'UN' in rx: ret= False
+    else:
+        ret = False
     return (ret)
 
 def get_giv_caldate(giv_scpi):
@@ -33,8 +35,9 @@ def get_giv_caldate(giv_scpi):
         rx = giv_scpi.send_request(cmd)
         nb_days = int(rx.replace(' ',''))
         adj_date = REF_DATE + timedelta (days=nb_days)
-        txt_date = adj_date.strftime('%d/%m/%y')
-    return txt_date
+        fr_date = adj_date.strftime('%d/%m/%Y')
+        db_date =  adj_date.strftime('%Y-%m-%d')
+    return (fr_date, db_date)
     
 def unlock_giv(giv_scpi):
     if giv_scpi is None:

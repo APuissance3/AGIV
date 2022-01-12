@@ -248,6 +248,32 @@ class CDevicesDriver(QtCore.QObject):
             #raise(ConnectionError())
             self.sig_communication_error.emit(self.str_error, q_red_color, BIG_FONT)
  
+
+    def get_aoip_datas(self):
+        dev_name = ''
+        dev_sn = ''
+        dev_adj_date = ''
+        dev_adj_rep= ''
+        if self.scpi_aoip is not None:
+            rx = self.scpi_aoip.send_request('*IDN?')
+            if rx and len(rx)>0:
+                datas = rx.split(',')
+                dev_name = datas[1] + '(' + datas[0] + ')'
+                dev_sn = datas[2]
+            rx = self.scpi_aoip.send_request('CAL:DATE?;:CAL:REP?')
+            if rx and len(rx)>0:
+                datas = re.split(',|;',rx)
+                dev_adj_date = datas[0] + '-' + datas[1] + '-' + datas[2]
+                dev_adj_rep = datas[3]
+        return(dev_name, dev_sn, dev_adj_date, dev_adj_rep)
+    
+    """ 
+    
+                              Debug Widgets management 
+    
+    """
+
+
     def save_combo_debug(self):
         with open(CMD_BOX_FILE,'w') as myfile:
             for i in range (self.pw.cBoxDbgSendCmd.count()):
