@@ -17,8 +17,8 @@ from CConfigFile import CConfigFile, create_config_file_instance, get_config_fil
 from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
-from GlobalVar import logger
 from CDBManager import  initialise_database
+from CLogger import create_logger
 
 
 global AppMW
@@ -63,7 +63,8 @@ class MainWindow(QtWidgets.QMainWindow,
 
 
     def init_log_name(self, str):
-        logger.log_change_name('log_'+str+'.txt')
+        log = get_logger()
+        log.log_change_name('log_'+str+'.txt')
         #xls_file.set_filename('Report_'+str+'.xlsx')
 
 
@@ -150,6 +151,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db = initialise_database("AP3reports_rec")
+
+    log = create_logger()
 
     AppMW = MainWindow()
     AppMW.setWindowTitle("A Puissance 3 - AGIV")
