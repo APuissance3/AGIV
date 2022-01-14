@@ -4,7 +4,6 @@
 import sys
 #import pathlib
 import os
-#from GlobalVar import *
 from CConfigFile import create_config_file_instance, get_config_ranges
 from Utilities import *
 from datetime import date

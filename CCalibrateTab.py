@@ -10,7 +10,8 @@ from CConfigFile import get_config_file, get_config_ranges
 from PySide2.QtCore import Signal, Slot, QThread, QObject
 from CRangeStatusLayout import CRangeStatusLayout
 from CCheckRangePoint import CCheckRangePoint
-from GlobalVar import logger
+from CLogger import get_logger
+
 from GivUtilities import lock_giv
 from CDBManager import get_database
 
@@ -59,6 +60,7 @@ class CCalibrationValues(QObject):
         """ Set Z or G parameter with the value. Check if it is realy writed
         if parameter given with '?' we only read the value and return it
         """
+        logger = get_logger()
         cmd_adj = self.range_data['correction']
         rx = '0.0'
         if '?' in param:  # Only ask for read value
@@ -107,6 +109,7 @@ class CCalibrationValues(QObject):
         self.check_calibration()
 
     def check_calibration(self):
+        logger = get_logger()
         self.devices = get_devices_driver() # USed also by the other methods
         #self.message = None
         logger.log_operation('Check range "{}"'.format(self.range_name))
@@ -136,6 +139,7 @@ class CCalibrationValues(QObject):
         self.report_calibration()
 
     def report_calibration(self):
+        logger = get_logger()
         logger.logdata('  X0= {: 9.6f}  X1= {:> 9.6f}\n'.format(self.x[0], self.x[1]))
         logger.logdata('  Y0= {: 9.6f}  Y1= {:> 9.6f}\n'.format(self.y[0], self.y[1]))
         logger.logdata('giv_g=  {: 8.6f} , giv_z=  {:+8.6f}\n'.format(self.dev_g, self.dev_z))

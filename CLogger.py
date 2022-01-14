@@ -1,6 +1,16 @@
 # This Python file uses the following encoding: utf-8
 import datetime as dt
 
+log = None
+
+def create_logger():
+    global log
+    log = CLogger()
+    return log
+
+def get_logger():
+    return log
+
 class CLogger():
     """ 
     This class is used to log the differents actions executed with a giv 
