@@ -131,7 +131,7 @@ def apply_style(app, style_fname):
 def msg_dialog_unlock():
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Question)
-    msg.setText("Le GIV est verouillé. On le déverouille pour la calibration ?")
+    msg.setText("Le GIV est verouillé. On le déverouille pour l'ajustage ?")
     msg.setWindowTitle("Déverouillage")
     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     ret = msg.exec_()
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
 
     #Enable for Debug by default
-    #AppMW.cBoxAdvanced.setChecked(True)
+    AppMW.cBoxAdvanced.setChecked(False)
 
     #Enable or disable advanced Tab function og advanced flag in the config file
     options= cfg_object.config['Options']

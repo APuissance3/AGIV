@@ -84,7 +84,7 @@
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
-      <string>Etalonnage</string>
+      <string>Ajustage</string>
      </attribute>
      <widget class="QScrollArea" name="scrollCalibrate">
       <property name="geometry">
@@ -176,7 +176,7 @@
        <string notr="true"/>
       </property>
       <property name="text">
-       <string>Modifier calibration</string>
+       <string>Modifier ajustage</string>
       </property>
       <property name="checked">
        <bool>true</bool>
