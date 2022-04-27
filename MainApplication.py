@@ -18,7 +18,7 @@ from MainWindow import Ui_MainWindow
 from Utilities import *
 from GivUtilities import *
 from CDBManager import  initialise_database
-from CLogger import create_logger
+from CLogger import create_logger, get_logger
 
 
 global AppMW

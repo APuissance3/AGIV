@@ -31,6 +31,8 @@ def get_giv_caldate(giv_scpi):
     cmd = ":SYST:ADJ:DATE?"
     rx=""
     txt_date ='01/01/2000'
+    fr_date = ''
+    db_date = ''
     if giv_scpi is not None:
         rx = giv_scpi.send_request(cmd)
         nb_days = int(rx.replace(' ',''))
