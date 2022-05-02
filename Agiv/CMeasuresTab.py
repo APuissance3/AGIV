@@ -1,18 +1,18 @@
 # This Python file uses the following encoding: utf-8
-from GivUtilities import get_giv_id
-from Utilities import *
+from .GivUtilities import get_giv_id
+from .Utilities import *
 import os
 
-from CMeasurePoint import CMeasurePoint
+from .CMeasurePoint import CMeasurePoint
 from PySide2.QtCore import Signal, Slot, QThread, QObject, QTimer
-from CCheckRangePoint import CCheckRangePoint
-from CConfigFile import get_config_file, get_config_ranges
-from CDevicesDriver import get_devices_driver
-from CRangeStatusLayout import CRangeStatusLayout
+from .CCheckRangePoint import CCheckRangePoint
+from .CConfigFile import get_config_file, get_config_ranges
+from .CDevicesDriver import get_devices_driver
+from .CRangeStatusLayout import CRangeStatusLayout
 from threading import get_ident
 from enum import Enum, unique
-from CDBManager import get_database, CDBManager
-from XlsReportGenerator import gen_measures_XLSreport, save_XLSreport
+from .CDBManager import get_database, CDBManager
+from .XlsReportGenerator import gen_measures_XLSreport, save_XLSreport
 
 # Enum for the states of state machine
 class CMeasSt(Enum):

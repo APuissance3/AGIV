@@ -6,7 +6,7 @@ from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Fo
 from openpyxl.worksheet.dimensions import ColumnDimension, DimensionHolder
 from openpyxl.utils import get_column_letter
 from datetime import datetime
-from CDBManager import CDBManager
+from .CDBManager import CDBManager
 
 
 

@@ -4,8 +4,8 @@
 import sys
 #import pathlib
 import os
-from CConfigFile import create_config_file_instance, get_config_ranges
-from Utilities import *
+from .CConfigFile import create_config_file_instance, get_config_ranges
+from .Utilities import *
 from datetime import date
 
 

@@ -3,7 +3,7 @@ from PySide2.QtCore import QObject, Signal
 import time
 import serial, serial.tools.list_ports
 
-from Utilities import SMALL_FONT
+from .Utilities import SMALL_FONT
 
 
 class CSimulatedPort():

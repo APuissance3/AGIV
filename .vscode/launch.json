@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Module",
+            "type": "python",
+            "request": "launch",
+            "module": "Agiv",
+            "justMyCode": true
+        },
+        {
             "name": "Python : MainApplication.py",
             "type": "python",
             "request": "launch",
-//            "program": "${workspaceFolder}/XlsReportgenerator.py",
-            "program": "${workspaceFolder}/MainApplication.py",
-//            "program": "${workspaceFolder}/CDBManager.py",
-            "console": "integratedTerminal"
+            //            "program": "${workspaceFolder}/XlsReportgenerator.py",
+            "program": "${file}",
+            //            "program": "${workspaceFolder}/CDBManager.py",
+            "console": "integratedTerminal",
+            "args": [
+                "bdist_wheel"
+            ]
         }
     ]
 }

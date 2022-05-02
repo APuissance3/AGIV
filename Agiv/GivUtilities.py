@@ -1,6 +1,5 @@
 # This Python file uses the following encoding: utf-8
 """ This module contains utilities function for working with Giv  """
-from CDevicesDriver import CDevicesDriver
 from datetime import datetime, timedelta
 
 REF_DATE = datetime.fromisoformat('2021-01-01')

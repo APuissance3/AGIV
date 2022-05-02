@@ -7,10 +7,10 @@ as a global variable
 
 from PySide2 import QtCore
 from PySide2.QtGui import QColor
-from CSerialScpiConnexion import *
+from .CSerialScpiConnexion import *
 import re
 #import os       # file i/o for debug combobox
-from Utilities import *
+from .Utilities import *
 import time
 
 color_cyan = QColor(51,175,255)
@@ -281,13 +281,16 @@ class CDevicesDriver(QtCore.QObject):
                 myfile.write(txt+'\n')
 
     def init_combo_debug(self):
-        with open(CMD_BOX_FILE,'r') as myfile:
-            self.pw.cBoxDbgSendCmd.clear()
-            txt = myfile.readline().replace('\n','')
-            while txt:
-                print ("cmd: '"+ txt + "'")
-                self.pw.cBoxDbgSendCmd.addItem(txt)
+        try:
+            with open(CMD_BOX_FILE,'r') as myfile:
+                self.pw.cBoxDbgSendCmd.clear()
                 txt = myfile.readline().replace('\n','')
+                while txt:
+                    print ("cmd: '"+ txt + "'")
+                    self.pw.cBoxDbgSendCmd.addItem(txt)
+                    txt = myfile.readline().replace('\n','')
+        except Exception as ex:
+            pass
 
     def send_debug_rly(self):
         str = self.pw.cBoxDbgSendCmd.currentText()

@@ -3,17 +3,17 @@
 #from PySide2 import QtWidget
 from PySide2 import QtCore
 
-from CDevicesDriver import get_devices_driver
-from Utilities import *
+from .CDevicesDriver import get_devices_driver
+from .Utilities import *
 #from CDevicesDriver import CDevicesDriver
-from CConfigFile import get_config_file, get_config_ranges
+from .CConfigFile import get_config_file, get_config_ranges
 from PySide2.QtCore import Signal, Slot, QThread, QObject
-from CRangeStatusLayout import CRangeStatusLayout
-from CCheckRangePoint import CCheckRangePoint
-from CLogger import get_logger
+from .CRangeStatusLayout import CRangeStatusLayout
+from .CCheckRangePoint import CCheckRangePoint
+from .CLogger import get_logger
 
-from GivUtilities import lock_giv
-from CDBManager import get_database
+from .GivUtilities import lock_giv
+from .CDBManager import get_database
 
 # If True: measure Z two time, more long but more shure
 # if False: Z adjusted only by calculation of the 2 first measures

@@ -5,20 +5,20 @@
 from PySide2.QtWidgets import QApplication, QMessageBox
 from PySide2 import QtWidgets
 from PySide2 import QtCore
-
+import os
 import sys
-
+from pathlib import Path
 
 # Our classes 
-from CCalibrateTab import CCalibrateTab
-from CMeasuresTab import CMeasuresTab
-from CDevicesDriver import CDevicesDriver, create_devices_driver, get_devices_driver
-from CConfigFile import CConfigFile, create_config_file_instance, get_config_file
-from MainWindow import Ui_MainWindow
-from Utilities import *
-from GivUtilities import *
-from CDBManager import  initialise_database
-from CLogger import create_logger, get_logger
+from .CCalibrateTab import CCalibrateTab
+from .CMeasuresTab import CMeasuresTab
+from .CDevicesDriver import CDevicesDriver, create_devices_driver, get_devices_driver
+from .CConfigFile import CConfigFile, create_config_file_instance, get_config_file
+from .MainWindow import Ui_MainWindow
+from .Utilities import *
+from .GivUtilities import *
+from .CDBManager import  initialise_database
+from .CLogger import create_logger, get_logger
 
 
 global AppMW
@@ -139,7 +139,19 @@ def msg_dialog_unlock():
     return (ret == QMessageBox.Yes)
 
 
-if __name__ == "__main__":
+
+def start_module_application():
+    home = str(Path.home())
+    agiv_dir = os.path.join(home,'Agiv')
+    try:
+        os.mkdir(agiv_dir)
+    except Exception as ex:
+        pass
+    try:
+        os.chdir(agiv_dir)
+    except Exception as ex:
+        print("Impossible de s'executer dans le repertoire Agiv: {}".format(ex))
+
     app = QApplication([])
 
     cfg_object = create_config_file_instance()   # Read config file and create an instance
@@ -171,7 +183,10 @@ if __name__ == "__main__":
 
 
     #  Apply stylesheet file to the MainWindow 
-    apply_style(AppMW, "Qt_Style.qrc")
+    path = os.path.abspath(__file__)
+    fullname = os.path.join(os.path.dirname(path), "Qt_Style.qrc") 
+   
+    apply_style(AppMW, fullname )
 
     # Connect Signal to DB: The DB usage is only in one thread
     # so we use signals to register values in main thread
@@ -238,3 +253,5 @@ if __name__ == "__main__":
 
     sys.exit(exit)
 
+if __name__ == "__main__":
+    start_module_application()
