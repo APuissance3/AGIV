@@ -102,7 +102,7 @@ Ranges:
         giv4: ":MODE OUTPUT_VOLTAGE_0100MV"
         measure_on: aoip 
         correction: ":OUTput:VOLTage:0100MV:ADJ_DAC_"
-        calibration_points: [-10.00, 115.0]
+        calibration_points: [-10.00, 115.0]  # Normalement -10.00,115.0
         points: [-24.0, 0.0, 10.0, 20.0, 40.0, 80.0, 100.0, 115.0]
         tolerance: [0.05, 0.001]  # 0.05% +/-1µV
 

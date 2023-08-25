@@ -27,7 +27,7 @@ class CConfigFile():
     """ Create a instance of the yaml config file with config_filename """
     def __init__(self, fname):
         path = os.path.abspath(__file__)
-        fullname = os.path.join(os.path.dirname(path), fname) 
+        fullname = os.path.join(os.path.dirname(path), fname) # Redirige vers le repertoire d'execution courant 
         # Loading all config info from YAML file
         with open(fullname, "r") as stream:
             try:

@@ -1,12 +1,16 @@
 # This Python file uses the following encoding: utf-8
 # to convert ui file: 
 # pyside2-uic MainWindow.ui -o MainWindow.py
+# Note: Résolution machine virtuelle: 1364 x 671
+
+# Note: Point d'entré du module: main() en fin de fichier, qui appelle start_module_application()
+
+
 
 from PySide2.QtWidgets import QApplication, QMessageBox
 from PySide2 import QtWidgets
 from PySide2 import QtCore
-import os
-import sys
+import os, sys
 from pathlib import Path
 
 # Our classes 
@@ -19,13 +23,9 @@ from .Utilities import *
 from .GivUtilities import *
 from .CDBManager import  initialise_database
 from .CLogger import create_logger, get_logger
+from .XlsReportGenerator import set_xls_flg_last_day_only, set_xls_flg_last_meas_only 
 
 
-global AppMW
-
-def get_main_window():
-    """ return AppMW for module that needs access to AppMW QWidgets"""
-    return AppMW
 
 class MainWindow(QtWidgets.QMainWindow, 
                 #Ui_MainWindow, CMeasuresTab, CCalibrateTab):
@@ -52,8 +52,10 @@ class MainWindow(QtWidgets.QMainWindow,
         self.cm_tab = CMeasuresTab(self)
         self.cc_tab = CCalibrateTab(self)
 
-        self.cm_tab.sig_info_message.connect(self.Qmessages_print)
+        self.cm_tab.sig_info_message.connect(self.Qmessages_print) # Connect signals info_message to our print function
         self.cc_tab.sig_info_message.connect(self.Qmessages_print)
+
+        self.cc_tab.sig_run_measure.connect(self.cm_tab.slot_run_measure_after_calibration) # Start measure process after calibration
 
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False) 
         self.setFixedSize(self.size()) # Disable resizing
@@ -61,10 +63,10 @@ class MainWindow(QtWidgets.QMainWindow,
         # Connecting information message from other tthread to the QTextConsole
         self.cBoxAdvanced.stateChanged.connect(self.change_advanced_mode)
 
-
     def init_log_name(self, str):
         log = get_logger()
-        log.log_change_name('log_'+str+'.txt')
+        logfilename = get_Agiv_dir() + '\\' + 'log_'+ str + '.txt'
+        log.log_change_name(logfilename)
         #xls_file.set_filename('Report_'+str+'.xlsx')
 
 
@@ -116,6 +118,7 @@ class MainWindow(QtWidgets.QMainWindow,
             d_drv= get_devices_driver()
             lock_giv(d_drv.scpi_giv4)
 
+
 # --------  End of MainWindow definition -----------------------
 
 
@@ -139,18 +142,12 @@ def msg_dialog_unlock():
     return (ret == QMessageBox.Yes)
 
 
-
 def start_module_application():
-    home = str(Path.home())
-    agiv_dir = os.path.join(home,'Agiv')
+    agiv_dir = get_Agiv_dir()
     try:
         os.mkdir(agiv_dir)
     except Exception as ex:
         pass
-    try:
-        os.chdir(agiv_dir)
-    except Exception as ex:
-        print("Impossible de s'executer dans le repertoire Agiv: {}".format(ex))
 
     app = QApplication([])
 
@@ -168,6 +165,7 @@ def start_module_application():
 
     AppMW = MainWindow()
     AppMW.setWindowTitle("A Puissance 3 - AGIV")
+    set_main_window(AppMW)
 
 
     #Enable for Debug by default
@@ -180,7 +178,9 @@ def start_module_application():
     if not enable_avanced:
         AppMW.cBoxAdvanced.setChecked(False)
     AppMW.change_advanced_mode()
-
+    
+    # For debug, only one thred
+    #AppMW.cBoxMultithread.setChecked(False)
 
     #  Apply stylesheet file to the MainWindow 
     path = os.path.abspath(__file__)
@@ -198,6 +198,7 @@ def start_module_application():
     # Lock and unlock buttons on advanced panel
     AppMW.pBtAdvLockGiv.clicked.connect(AppMW.force_lock_giv)
     AppMW.pBtAdvUnlockGiv.clicked.connect(AppMW.force_unlock_giv)
+
 
     #AppMW.QTextConsole.append("Starting")
     AppMW.show()
@@ -226,9 +227,9 @@ def start_module_application():
     giv_id = get_giv_id(d_drv.scpi_giv4)
     db.register_giv(giv_id)  # The next records link with this GIV
     (giv_date, db_giv_date) = get_giv_caldate(d_drv.scpi_giv4)
-    db.register_giv_last_cal_date(db_giv_date) # Register the Lock date
+    db.register_giv_last_cal_date(db_giv_date, giv_id) # Register the Lock date
     AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
-    AppMW.lEIdentifiant.setText("GIV4_Ref_{}".format(giv_id))
+    AppMW.lEIdentifiant.setText(f"{giv_id}")
     AppMW.lE_DateCalib.setText(giv_date)
 
     # Check if GIV is looked. If Yes, ask to unlock

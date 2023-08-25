@@ -22,9 +22,9 @@ class CRangeStatusLayout(object):
         self.cBoxStatus = QCheckBox(" --- ")
         self.cBoxStatus.setTristate(True)
         self.cBoxStatus.setStyleSheet(  "QCheckBox::indicator { width: 17px; height: 17px;}"
-                                        "QCheckBox::indicator::unchecked {image: url(icons/led-red-on.png);}"
-                                        "QCheckBox::indicator::indeterminate {image: url(icons/led-gray.png);}"
-                                        "QCheckBox::indicator:checked {image: url(icons/led-green-on.png);}"
+                                        "QCheckBox::indicator::unchecked {image: url(./Agiv/icons/led-red-on.png);}"
+                                        "QCheckBox::indicator::indeterminate {image: url(./Agiv/icons/led-gray.png);}"
+                                        "QCheckBox::indicator:checked {image: url(./Agiv/icons/led-green-on.png);}"
         )
         self.hLayout = QHBoxLayout()
         self.hLayout.addWidget(self.cBoxStatus)

@@ -5,6 +5,10 @@
 from PySide2.QtWidgets import QApplication, QWidget,QVBoxLayout, QMessageBox
 
 from PySide2.QtGui import QColor
+import os
+from pathlib import Path
+import winsound as ws
+
 
 INFO_FONT = 12.0
 NORMAL_FONT = 14.0
@@ -38,6 +42,35 @@ def msg_dialog_confirm(strmessage, title):
     ret = msg.exec_()
     return (ret == QMessageBox.Yes)
 
+""" Retourne le chemin Agiv dans le home (soit %userprofile%/Agiv sous Windows) """
+def get_Agiv_dir():
+    home = str(Path.home())
+    agiv_dir = os.path.join(home,'Agiv')
+    return agiv_dir
+
+def play_success():
+    ws.PlaySound("./Agiv/sounds/success.wav", ws.SND_FILENAME)
+
+def play_echec():
+    ws.PlaySound("./Agiv/sounds/echec.wav", ws.SND_FILENAME)
+
+
+""" Les fonctions ci-dessous permettent l'acces aux windget a partir de la mainWindow """
+global AppMW
+
+ # Fonction appellée par MainApplication pour passer l'info de la fenetre principale
+def set_main_window(win):
+    global AppMW
+    AppMW = win
+
+def get_main_window():
+    """ return AppMW for module that needs access to AppMW QWidgets"""
+    return AppMW
+
+"""" Utile pour avoir l'etat de la checkbox overwrite au moment des calculs """
+def get_overwrite_flag():
+    flg_overwrite = True if get_main_window().cBoxRazCalib.isChecked() else False
+    return flg_overwrite
 
 
 def str2float(str):

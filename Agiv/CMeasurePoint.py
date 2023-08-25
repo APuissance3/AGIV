@@ -6,6 +6,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
+
 #ICON_BLUE_LED = ":/icons/blue-led-on.png"
 
 class CMeasurePoint(object):
@@ -14,6 +15,7 @@ class CMeasurePoint(object):
     """
     def __init__(self, point_value, parent=None):
         super(CMeasurePoint,self).__init__()
+        curdir = os.getcwd()  # Pour debug: verification que l'on est au bon endroit
         self.check = None
         self.value = point_value
         # Le ">"  indique une justification à droite
@@ -21,10 +23,10 @@ class CMeasurePoint(object):
         self.hiew = QHBoxLayout()
         self.vled = QCheckBox(self.check_value)
         self.vled.setTristate(True)
-        self.vled.setStyleSheet(  "QCheckBox::indicator { width: 17px; height: 17px;}"
-                                    "QCheckBox::indicator::unchecked {image: url(icons/led-red-on.png);}"
-                                    "QCheckBox::indicator::indeterminate {image: url(icons/led-gray.png);}"
-                                    "QCheckBox::indicator:checked {image: url(icons/led-green-on.png);}"
+        stat = self.vled.setStyleSheet(  "QCheckBox::indicator { width: 17px; height: 17px;}"
+                                    "QCheckBox::indicator::unchecked {image: url(./Agiv/icons/led-red-on.png);}"
+                                    "QCheckBox::indicator::indeterminate {image: url(./Agiv/icons/led-gray.png);}"
+                                    "QCheckBox::indicator:checked {image: url(./Agiv/icons/led-green-on.png);}"
         )
         self.vled.setGeometry(100,100,600,400)
         self.update_indicator_color()
@@ -49,15 +51,16 @@ class CMeasurePoint(object):
 
 
     def update_indicator_color(self):
+        force_vled = False   # Force l'affichage des Led en attendant de savoir pourquoi le setStyleSheet() ne fonctionne pas
         if self.check == True:
             self.vled.setCheckState(QtCore.Qt.CheckState.Checked)
-            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}")
+            self.vled.setStyleSheet("QCheckBox::indicator {background-color : lightgreen;}") if force_vled else None 
         elif self.check == False:
             self.vled.setCheckState(QtCore.Qt.CheckState.Unchecked)
-            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : red;}")
+            self.vled.setStyleSheet("QCheckBox::indicator {background-color : red;}") if force_vled else None 
         else:
             self.vled.setCheckState(QtCore.Qt.CheckState.PartiallyChecked)
-            #self.vled.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}")
+            self.vled.setStyleSheet("QCheckBox::indicator {background-color : darkGray;}") if force_vled else None 
 
  
     def setupUi(self, MainWindow):

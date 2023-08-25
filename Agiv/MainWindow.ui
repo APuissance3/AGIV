@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1003</width>
-    <height>884</height>
+    <height>672</height>
    </rect>
   </property>
   <property name="font">
@@ -28,10 +28,10 @@
    <widget class="QLabel" name="label_Titre">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>10</y>
+      <x>110</x>
+      <y>0</y>
       <width>761</width>
-      <height>51</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
@@ -52,11 +52,14 @@
    <widget class="QTextEdit" name="QTextConsole">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>530</y>
+      <x>30</x>
+      <y>480</y>
       <width>911</width>
-      <height>271</height>
+      <height>131</height>
      </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QTabWidget" name="tabWidget">
@@ -65,10 +68,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>50</y>
+      <x>30</x>
+      <y>30</y>
       <width>911</width>
-      <height>441</height>
+      <height>411</height>
      </rect>
     </property>
     <property name="font">
@@ -90,9 +93,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>30</y>
+        <y>0</y>
         <width>391</width>
-        <height>341</height>
+        <height>371</height>
        </rect>
       </property>
       <property name="widgetResizable">
@@ -104,7 +107,7 @@
          <x>0</x>
          <y>0</y>
          <width>389</width>
-         <height>339</height>
+         <height>369</height>
         </rect>
        </property>
       </widget>
@@ -163,8 +166,8 @@
      <widget class="QCheckBox" name="cBoxWriteCal">
       <property name="geometry">
        <rect>
-        <x>580</x>
-        <y>310</y>
+        <x>570</x>
+        <y>270</y>
         <width>171</width>
         <height>21</height>
        </rect>
@@ -185,8 +188,8 @@
      <widget class="QCheckBox" name="cBoxRazCalib">
       <property name="geometry">
        <rect>
-        <x>580</x>
-        <y>340</y>
+        <x>570</x>
+        <y>300</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -195,10 +198,10 @@
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si coché, on écrase les calibrations précédentes en imposant un gain= 1 et offset à 0 avant la calibration. méthode plus lente mais plus sure. Si décoché, on ré-ajuste la calibration a partir de celle existante. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
-       <string>Forcer Z=0 G=1</string>
+       <string>Forcer G=1</string>
       </property>
       <property name="checked">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QPushButton" name="pBtLockGiv">
@@ -220,6 +223,25 @@
        <string>VERROUILLER GIV</string>
       </property>
      </widget>
+     <widget class="QCheckBox" name="cBoxRunMeasures">
+      <property name="geometry">
+       <rect>
+        <x>570</x>
+        <y>330</y>
+        <width>241</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si coché, on lance automatiquement un relevé de mesures après la fin de l'ajustage. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Lancer un relevé après ajustage</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Measures">
      <attribute name="title">
@@ -229,7 +251,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>0</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -247,7 +269,7 @@
       <property name="geometry">
        <rect>
         <x>420</x>
-        <y>40</y>
+        <y>30</y>
         <width>201</width>
         <height>341</height>
        </rect>
@@ -270,7 +292,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>40</y>
+        <y>30</y>
         <width>391</width>
         <height>341</height>
        </rect>
@@ -344,7 +366,7 @@
       <property name="geometry">
        <rect>
         <x>420</x>
-        <y>10</y>
+        <y>0</y>
         <width>81</width>
         <height>21</height>
        </rect>
@@ -374,7 +396,70 @@
        <string/>
       </property>
       <property name="text">
-       <string>GENERER RAPPORT</string>
+       <string>GENERER RAPPORT GIV</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cBoxLastDate">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>220</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si cochée, tous les relevés connus du Giv sont présent dans le rapport, avec un onglet pour chaque date. Si décochée, on n'affichera que la dernière date de relevés.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>Toutes les dates</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cBoxLastSequence">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>250</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si cochée, toutes les mesures obtenues après un &amp;quot;Lancer mesures&amp;quot; apparaissent. Si décochée, on affiche que les dernieres mesures d'une journée.  .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="text">
+       <string>Toutes les mesures</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="pBtGenerateRepport_2">
+      <property name="geometry">
+       <rect>
+        <x>660</x>
+        <y>290</y>
+        <width>191</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Générer un fichier excel des mesures les plus récentes de chaque GIV pour comparaison.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="statusTip">
+       <string/>
+      </property>
+      <property name="text">
+       <string>GEN. COMPARATIF GIVS</string>
       </property>
      </widget>
     </widget>
@@ -525,8 +610,8 @@
    <widget class="QLabel" name="lbl_Comm">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>500</y>
+      <x>30</x>
+      <y>450</y>
       <width>151</width>
       <height>21</height>
      </rect>
@@ -543,8 +628,8 @@
    <widget class="QLineEdit" name="lEIdentifiant">
     <property name="geometry">
      <rect>
-      <x>390</x>
-      <y>500</y>
+      <x>400</x>
+      <y>450</y>
       <width>201</width>
       <height>21</height>
      </rect>
@@ -567,8 +652,8 @@
    <widget class="QLabel" name="lbl_Identifiant">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>500</y>
+      <x>310</x>
+      <y>450</y>
       <width>81</width>
       <height>20</height>
      </rect>
@@ -585,8 +670,8 @@
    <widget class="QLabel" name="lbl_LastEtal">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>500</y>
+      <x>670</x>
+      <y>450</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -603,8 +688,8 @@
    <widget class="QLineEdit" name="lE_DateCalib">
     <property name="geometry">
      <rect>
-      <x>810</x>
-      <y>500</y>
+      <x>820</x>
+      <y>450</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -627,6 +712,14 @@
      <bool>true</bool>
     </property>
    </widget>
+   <zorder>tabWidget</zorder>
+   <zorder>lbl_Comm</zorder>
+   <zorder>lEIdentifiant</zorder>
+   <zorder>lbl_Identifiant</zorder>
+   <zorder>lbl_LastEtal</zorder>
+   <zorder>lE_DateCalib</zorder>
+   <zorder>label_Titre</zorder>
+   <zorder>QTextConsole</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -634,7 +727,7 @@
      <x>0</x>
      <y>0</y>
      <width>1003</width>
-     <height>27</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

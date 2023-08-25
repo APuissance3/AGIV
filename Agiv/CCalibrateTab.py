@@ -3,6 +3,8 @@
 #from PySide2 import QtWidget
 from PySide2 import QtCore
 
+import os, sys,pathlib
+
 from .CDevicesDriver import get_devices_driver
 from .Utilities import *
 #from CDevicesDriver import CDevicesDriver
@@ -14,6 +16,10 @@ from .CLogger import get_logger
 
 from .GivUtilities import lock_giv
 from .CDBManager import get_database
+from .XlsReportGenerator import set_xls_flg_last_day_only, set_xls_flg_last_meas_only 
+
+
+
 
 # If True: measure Z two time, more long but more shure
 # if False: Z adjusted only by calculation of the 2 first measures
@@ -28,7 +34,7 @@ class CCalibrationValues(QObject):
     sig_CCalibVal_Message = Signal(object, object, object)
 
   
-    def __init__(self, range_name, range_data, flg_overwrite, parent=None ) -> None:
+    def __init__(self, range_name, range_data, parent=None ) -> None:
         super(CCalibrationValues, self).__init__()
         self.range_name = range_name
         self.range_data = range_data
@@ -51,8 +57,6 @@ class CCalibrationValues(QObject):
             self.z_factor = range_data['z_factor']
         if 'z_g_overwrite' in range_data:
             self.zg_reset = 'z_g_overwrite'
-        if flg_overwrite:
-            self.zg_reset = True
         self.message = None
         self.error = False
 
@@ -81,12 +85,14 @@ class CCalibrationValues(QObject):
         return(float(rx))
 
     def exec_calibration(self):
-        self.check_calibration()
+
+        self.check_calibration() # Lecture des parametres d'ajustement et des points d'étalonnage
+        # Probleme avec le zero: on réinitialise dans tous les cas
+
         # if zg_reset we force the parameters G=1 and Z=0
+        self.zg_reset = get_overwrite_flag()
         if self.zg_reset:
             self.sig_CCalibVal_Message.emit("Init reglages G et Z", q_green_color, INFO_FONT )
-            self.cmd_adjust_param('Z', 0.0)
-            self.dev_z = 0.0
             self.cmd_adjust_param('G', 1.0)
             self.dev_g = 1.0
             self.sig_CCalibVal_Message.emit("Mesure des nouveaux points 0 et FS", q_green_color, INFO_FONT )
@@ -101,9 +107,19 @@ class CCalibrationValues(QObject):
         else:
             self.new_g = self.dev_g  / self.dev_a
             self.cmd_adjust_param('G', self.new_g)
+
+        # Porbleme avec l'ajustage d'offset. Dans tous les cas, on repart avec un Z à 0
+        self.cmd_adjust_param('Z', 0.0)
+        self.dev_z = 0.0
+
+        # Le gain est rectifié, on cherche a ajuster le zéro avec ce nouveau gain
         self.y[0] = self.devices.check_value(self.x[0])  # Reload y0 with the new G
-        self.dev_b = self.y[0] - self.x[0]
-        self.new_z = self.dev_z - ((self.y[0] - self.x[0]) / self.z_factor)
+        self.y[1] = self.devices.check_value(self.x[1])  # Reload y1 with the new G
+        # modification du 08/2023: On ajuste le 0 avec la moyenne des deux points et le nouveau gain
+        self.dev_b = ((self.y[0] - self.x[0]) + (self.y[1] - self.x[1]))/2
+        # Petit doute: inversion sens de correction du Z   - self.new_z = self.dev_z - (self.dev_b / self.z_factor)
+        # self.new_z = (self.dev_b / self.z_factor) - self.dev_z
+        self.new_z = self.dev_b # On ne tient pas compte 
         self.cmd_adjust_param('Z', self.new_z)
         self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
         self.check_calibration()
@@ -143,9 +159,10 @@ class CCalibrationValues(QObject):
         logger.logdata('  X0= {: 9.6f}  X1= {:> 9.6f}\n'.format(self.x[0], self.x[1]))
         logger.logdata('  Y0= {: 9.6f}  Y1= {:> 9.6f}\n'.format(self.y[0], self.y[1]))
         logger.logdata('giv_g=  {: 8.6f} , giv_z=  {:+8.6f}\n'.format(self.dev_g, self.dev_z))
-        #logger.logdata('calc_g= {: 8.6f} , calc_z= {:+8.6f}\n'.format(self.dev_a, self.dev_b))
+        logger.logdata('calc_g= {: 8.6f} , calc_z= {:+8.6f}\n'.format(self.dev_a, self.dev_b))
         if self.message is not None:
             logger.logdata(self.message)
+
 
 
 
@@ -160,6 +177,8 @@ class CCalibrateTab(QThread):
     sig_info_message = Signal(object, object, object)
     sig_register_range = Signal(object)
     sig_register_value = Signal(object,object,object)
+    # Signal for CmeasuresTab to run the measure process after calibration
+    sig_run_measure = Signal(object)
 
 
     def __init__(self, parent =None):
@@ -169,11 +188,10 @@ class CCalibrateTab(QThread):
         self.vCalibrateLayout = createVLayerForScroll(self.phmi.scrollCalibrate)
         self.cal_range_list = []
         self.running = False
+        self.run_measures = False
         
         # Hide Lock button: Lock is automatic if all the ranges are ok
         self.phmi.pBtLockGiv.setVisible(False)  
-
-        flg_overwrite = True if parent.cBoxRazCalib.isChecked() else False
 
         # Read our ranges data and fill ranges layer      
         self.cfg_ranges = get_config_ranges()
@@ -184,7 +202,7 @@ class CCalibrateTab(QThread):
                     cal_view = CRangeStatusLayout(range, range_data, self.phmi)    # Create the object
                     self.vCalibrateLayout.addLayout(cal_view.hLayout)
                     # cal_values is the two point of calibration and methods to calibrate
-                    cal_values = CCalibrationValues( range, range_data, flg_overwrite, self)
+                    cal_values = CCalibrationValues( range, range_data, self)
                     cal_values.sig_CCalibVal_Message.connect(parent.Qmessages_print)
                     # We append in the list the Hlayer and the associated calibration points
                     self.cal_range_list.append((cal_view, cal_values))
@@ -196,19 +214,41 @@ class CCalibrateTab(QThread):
         self.phmi.pBtLockGiv.clicked.connect(self.lock_giv)
         self.select_all_range()
 
+        # Repport format checkbox connetion and initialisation to actual value
+        self.phmi.cBoxLastDate.toggled.connect(self.cBoxLastDateToggled)
+        self.cBoxLastDateToggled() # Set value to actual state
+        self.phmi.cBoxLastSequence.toggled.connect(self.cBoxLastSequenceToggled)
+        self.cBoxLastSequenceToggled()
+        self.phmi.cBoxRunMeasures.toggled.connect(self.cBoxRunMeasuresToggled)
+        self.cBoxRunMeasuresToggled()
+    
+    def cBoxRunMeasuresToggled(self):
+        self.run_measures = self.phmi.cBoxRunMeasures.isChecked()
 
+    def cBoxLastDateToggled(self):
+        set_xls_flg_last_day_only(not self.phmi.cBoxLastDate.isChecked())
+
+    def cBoxLastSequenceToggled(self):
+        set_xls_flg_last_meas_only(not self.phmi.cBoxLastSequence.isChecked())
+
+    """ Button Select All """
     def select_all_range(self):
+        path = os.path.abspath(__file__)
+        fullname = os.path.join(os.path.dirname(path), "./Agiv/sounds/success.wav") 
+        print (fullname)
+        print(Path.cwd())
         for (cal_view, cal_values) in self.cal_range_list:
             cal_view.cBoxSel.setChecked(True)
 
-
+    """ Button Unselect All """
     def unselec_all_range(self):
         for (cal_view, cal_values) in self.cal_range_list:
             cal_view.cBoxSel.setChecked(False)    
 
+    """ Button Start Adjust """
     def pBt_run_clicked(self):
-        if not self.running:
-            self.running = True
+        if not self.running:        # Can start or stop the process 
+            self.running = True     # Here we start 
             self.phmi.pBtRunCalibration.setText("ARRET AJUSTAGE")
             db = get_database()
             db.register_now_cal_date()  # Add this date to DB
@@ -217,24 +257,36 @@ class CCalibrateTab(QThread):
             else:
                 self.run()        # For debuging, we could run in the main thread
         else:
-            self.terminate()
+            self.terminate()        # Here we stop 
             self.wait()
             self.sig_info_message.emit("Ajustage interrompu par l'utilisateur", q_red_color, None)
             self.end_of_calibration()
 
     def end_of_calibration(self):
         all_ok = True
+        an_error = False
         self.running = False
         self.phmi.pBtRunCalibration.setText("LANCER AJUSTAGE")
+        # Check all calibrations status
         for (cal_view, cal_values) in self.cal_range_list:
             if cal_view.cal_status != True:
-                all_ok = False
-                break
+                all_ok = False  # Not all calibration are ok
+            if cal_view.cal_status == False:
+                an_error = True # At least a calibration not passed
         print("All ok: {}".format(all_ok))
+        all_ok = True
         if all_ok:
             self.sig_info_message.emit("Ajustage terminé ok. Verouillage du GIV",
                     q_orange_color, None)
-            self.lock_giv()
+            #self.lock_giv()
+            # Here, we look for running the measures after the calibration
+            if self.run_measures:
+                self.sig_run_measure.emit("Fin calibration") # Continue en effectuant un relevé de mesures
+            else:
+                play_success() # If no measure required, advertise success
+        if an_error: # Averti si echec
+            play_echec()
+
   
 
     def lock_giv(self):

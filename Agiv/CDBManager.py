@@ -4,8 +4,14 @@
 import sys
 #import pathlib
 import os
-from .CConfigFile import create_config_file_instance, get_config_ranges
-from .Utilities import *
+try:
+    from .CConfigFile import create_config_file_instance, get_config_ranges
+    from .Utilities import *
+
+except Exception as ex:
+    from CConfigFile import create_config_file_instance, get_config_ranges
+    from Utilities import *
+
 from datetime import date
 
 
@@ -38,6 +44,7 @@ SQL_TABLE_RANGES =  f'CREATE TABLE  IF NOT EXISTS Ranges ('\
 # Date type: Lock or Record (calibration or measurement)
 SQL_TABLE_DATES =   f'CREATE TABLE  IF NOT EXISTS RecDates ('\
                     f'`Key_id` INTEGER NOT NULL UNIQUE,'\
+                    f'Giv_id`` TEXT'\
                     f'`Date` TEXT,'\
                     f'`Type` TEXT,'\
                     f'UNIQUE (`Date`,`Type`) ON CONFLICT IGNORE,'\
@@ -66,6 +73,10 @@ SQL_TABLE_MEASURES = f'CREATE TABLE  IF NOT EXISTS Measure_points ('\
                     f'FOREIGN KEY(`Range_ref`) REFERENCES Ranges(`Key_id`)'\
                     f' );'
 
+SQL_TABLE_MEASURE_START = f'CREATE TABLE  IF NOT EXISTS Measure_Start ('\
+                    f'`Key_id` INTEGER NOT NULL UNIQUE,'\
+                    f'`Start_Date` TEXT,'\
+                    f'PRIMARY KEY (`Key_id`) );'
 
 DB_SYST = "sqlite3"
 
@@ -106,6 +117,7 @@ class CDBManager():
         self.range_key = None # key_id of Actual range
         self.newcaldate = None # Actual date Key_id that we adjust GIV
         self.lockdate = None # Registered date of the last calibration in the GIV
+        self.start_key = None # Key_id of the measure date starting
 
 
     def connect(self):
@@ -113,7 +125,8 @@ class CDBManager():
             return
 
         if "sqlite3" in DB_SYST:
-            self.connector = sqlite3.connect(self.curdir+'\\'+self.name+'.db3')
+            local_db_file = get_Agiv_dir()+'\\'+self.name+'.db3'
+            self.connector = sqlite3.connect(local_db_file)
         else:
             self.connector = mariadb.connect(user=self.user, password=self.password, 
                     host=self.host , port=self.port, database=self.name)
@@ -157,28 +170,37 @@ class CDBManager():
         """
         self.connect()
         #self.cursor = self.connector.cursor()
-        sqlcmd = "INSERT OR IGNORE INTO GIV_ids (Giv_id) VALUES ('{}');".format(giv_id) 
+        sqlcmd = f"INSERT OR IGNORE INTO GIV_ids (Giv_id) VALUES ('{giv_id}');"
         self.cursor.execute(sqlcmd)
         #self.exec_insert_ignore_unique(sqlcmd)
         self.connector.commit()
-        sqlcmd = "SELECT Key_id FROM GIV_ids WHERE GIV_id = '{}';".format(giv_id)
+        sqlcmd = f"SELECT Key_id FROM GIV_ids WHERE GIV_id = '{giv_id}';"
         cur = self.connector.execute(sqlcmd)
         self.giv_key = cur.fetchone()[0]
         print ("Giv key:{}".format(self.giv_key ))
 
-    def register_giv_last_cal_date(self, date):
+    def register_giv_last_cal_date(self, date, giv_id):
         """ Add the calibration date of the GIV 
         and get this Key_id 
         """
         self.connect()
-        sqlcmd = "INSERT OR IGNORE INTO RecDates (Date, Type) "\
-                    "VALUES ('{}','LOCK');".format(date) 
+        sqlcmd = f"INSERT OR IGNORE INTO RecDates (Date, Giv_id, Type) "\
+                 f"VALUES ('{date}','{giv_id}','LOCK');" 
         curs = self.cursor.execute(sqlcmd)
         self.connector.commit()
         sqlcmd = " SELECT Key_id FROM RecDates WHERE Date == '{}' AND Type='LOCK';".format(date)
         curs = self.cursor.execute(sqlcmd)
         res = curs.fetchone()
         self.lockdate = res[0]
+
+    def retrive_giv_last_cal(self, giv_id):
+        self.connect()
+        sqlcmd = f" SELECT Date FROM RecDates WHERE (Giv_id == '{giv_id}' AND Type='LOCK') ORDER BY Key_id DESC;"
+        curs = self.cursor.execute(sqlcmd)
+        res = curs.fetchone()
+        self.lockdate = res[0] if res != None else "Unknown"
+        return self.lockdate
+
         
     def register_now_cal_date(self):
         """ Add the actual calibration date of the GIV 
@@ -205,13 +227,26 @@ class CDBManager():
         self.range_key = cur.fetchone()[0]
         print ("Range key:{}".format(self.range_key))
 
+
+    def register_measure_start(self):
+        """ Note the date and time of the starting of measures. Return the key_id of this start 
+        permits to show multiples measures session in one Excel sheet """
+        self.connect()
+        sqlcmd = "INSERT INTO Measure_Start (Start_Date) VALUES(datetime('now','localtime'));"
+        res = self.cursor.execute(sqlcmd)
+        self.connector.commit()
+        self.start_key = self.cursor.lastrowid
+        pass
+
+
+
     def register_measure(self, ref, meas):
         """ Note the ref and measured value for the last register GIV_id and Range 
         The date field is auto-filled 
         """
         self.connect()
-        sqlcmd = "INSERT INTO Measure_points (Giv_ref, Date_meas, Range_ref, Ref_val, Meas_val) VALUES("\
-                 "{}, datetime('now'), {}, {}, {});".format(self.giv_key, self.range_key, ref, meas)
+        sqlcmd = f"INSERT INTO Measure_points (Giv_ref, Start_key, Date_meas, Range_ref, Ref_val, Meas_val) VALUES("\
+                 f"{self.giv_key}, {self.start_key}, datetime('now','localtime'), {self.range_key}, {ref}, {meas});"
         res = self.connector.execute(sqlcmd)
         self.connector.commit()
 
@@ -221,41 +256,51 @@ class CDBManager():
         self.connect()
         date_key = self.newcaldate if flg_wr else self.lockdate
         sqlcmd = "INSERT INTO Calib_params (Giv_ref, Date_ref, Range_ref, offset, gain, Date_rec) VALUES("\
-                 "{}, {}, {}, {:.06f}, {:.06f}, Datetime('now'));".format(self.giv_key, date_key, self.range_key, offset, gain)
+                 "{}, {}, {}, {:.06f}, {:.06f}, Datetime('now','localtime'));".format(self.giv_key, date_key, self.range_key, offset, gain)
         res = self.connector.execute(sqlcmd)
         self.connector.commit()
 
 
-    def get_dates_of_measures_for_registrered_Giv(self):
+    def get_dates_of_measures_for_registrered_Giv(self, only_last = False):
         """ Return the list of measures dates grouped by days for this device  """
         self.connect()
         sqlcmd = "SELECT DATE(Date_meas) FROM Measure_points, GIV_ids "\
-                 "WHERE Key_id={} GROUP BY DATE(Date_meas) ORDER BY Date_meas;".format(self.giv_key)
-        cur = self.cursor.execute(sqlcmd)
-        dates = cur.fetchall()
+                 f"WHERE Key_id={self.giv_key} GROUP BY DATE(Date_meas) ORDER BY Date_meas DESC;"
+        cur = self.cursor.execute(sqlcmd)        
+        dates = cur.fetchone() if only_last else cur.fetchall()
         return dates
 
+    def get_measure_sequences_by_date_for_registered_Giv(self ,date, only_last = False):
+        """ Return the Start_keys for a Giv at one date """
+        self.connect()
+        sqlcmd = "SELECT Start_key, Date_meas FROM Measure_points "\
+                 f"WHERE Giv_ref = {self.giv_key} AND DATE(Date_meas)= '{date}'"\
+                 " GROUP BY Start_key ORDER BY Start_key DESC;"
+        cur = self.cursor.execute(sqlcmd)
+        starts = cur.fetchone() if only_last else cur.fetchall()
+        return starts
 
-    def get_ranges_of_measures_by_date_for_registrered_Giv(self,date):
+    def get_ranges_of_measures_by_date_and_start_for_registrered_Giv(self, date, start_key = None):
         """ Return the list of ranges for one date and one GIV   """
         self.connect()
+        sql_start_key = f" AND Start_key = {start_key}" if start_key != None else ""
         sqlcmd = "SELECT Range_ref, Range FROM Measure_points,Ranges WHERE "\
-                 "Giv_ref = {} AND DATE(Date_meas)= '{}' AND Range_ref = Ranges.Key_id"\
-                 " GROUP BY Range_ref ORDER BY Range_ref;".format(self.giv_key,
-                 date)
+                 f"Giv_ref = {self.giv_key} AND DATE(Date_meas)= '{date}' "\
+                 f"AND Range_ref = Ranges.Key_id" + sql_start_key + \
+                 " GROUP BY Range_ref ORDER BY Range_ref ASC, Start_key DESC;"
         cur = self.cursor.execute(sqlcmd)
         rec_result = cur.fetchall()
         return (rec_result)   # Typiquely: [0]: (1, 'Output current'), [1]: (2, 'Output 0-100mV)  ...
 
-    def get_measures_by_range_date_giv_id(self, date, range_id):
+    def get_measures_by_range_date_giv_id(self, date, range_id, start_key=None):
         """ Return the list of the measures for one day and one range. If there are many measures
         on the same, day, we return only the most recents one (with group by)
         """
         self.connect()
+        sql_start_key = f" AND Start_key = {start_key}" if start_key != None else ""
         sqlcmd = "SELECT MAX(Date_meas), Range_ref, Ref_val, Meas_val FROM Measure_points WHERE "\
-                 "Giv_ref = {} AND DATE(Date_meas)= '{}' AND Range_ref = {}"\
-                 " GROUP BY Range_ref, Ref_val ORDER BY Range_ref, Ref_val, Date_meas;".format(self.giv_key,
-                 date, range_id)
+                 f"Giv_ref = {self.giv_key} AND DATE(Date_meas)= '{date}' AND Range_ref = {range_id}"\
+                 + sql_start_key + " GROUP BY Range_ref, Ref_val ORDER BY Range_ref, Ref_val, Date_meas;"
         cur = self.cursor.execute(sqlcmd)
         rec_result = cur.fetchall()
         return (rec_result)   # Typiquely: [0]:
@@ -297,7 +342,8 @@ class CDBManager():
         self.cursor.execute(SQL_TABLE_RANGES)   # Create Ranges
         self.cursor.execute(SQL_TABLE_DATES)    # Create Dates
         self.cursor.execute(SQL_TABLE_CALIB_PARAM)    # Create Dates
-        self.cursor.execute(SQL_TABLE_MEASURES)    # Create Dates
+        self.cursor.execute(SQL_TABLE_MEASURES)    # Create 
+        self.cursor.execute(SQL_TABLE_MEASURE_START)    # Create 
         self.connector.commit()
 
 

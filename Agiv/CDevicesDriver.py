@@ -275,14 +275,17 @@ class CDevicesDriver(QtCore.QObject):
 
 
     def save_combo_debug(self):
-        with open(CMD_BOX_FILE,'w') as myfile:
+        exit() # On sauve au fur et a mesure des commandes emises
+        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
+        with open(dbg_cmd_file,'w') as myfile:
             for i in range (self.pw.cBoxDbgSendCmd.count()):
                 txt = self.pw.cBoxDbgSendCmd.itemText(i)
                 myfile.write(txt+'\n')
 
     def init_combo_debug(self):
+        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
         try:
-            with open(CMD_BOX_FILE,'r') as myfile:
+            with open(dbg_cmd_file,'r') as myfile:
                 self.pw.cBoxDbgSendCmd.clear()
                 txt = myfile.readline().replace('\n','')
                 while txt:
@@ -292,17 +295,44 @@ class CDevicesDriver(QtCore.QObject):
         except Exception as ex:
             pass
 
+    """ Ajoute la commande au fichier de debug """
+    def add_debug_cmd(self, cmd):
+        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
+        newcmd = True
+        try:
+            with open(dbg_cmd_file,'r') as myfile:
+                txt = myfile.readline().replace('\n','')
+                while txt:
+                    if txt == cmd:
+                        newcmd = False
+                    txt = myfile.readline().replace('\n','')
+        except Exception as ex:
+            pass
+        if newcmd:  # Ajoute commande si pas deja presente
+            with open(dbg_cmd_file,'a') as myfile:
+                myfile.write(cmd+'\n')
+                #self.pw.cBoxDbgSendCmd.addItem(cmd)
+            #print("cmd {} added".format(cmd))
+
+
+
+
     def send_debug_rly(self):
         str = self.pw.cBoxDbgSendCmd.currentText()
-        self.scpi_relays.send_request(str)
+        rx = self.scpi_relays.send_request(str)
 
     def send_debug_aoip(self):
         str = self.pw.cBoxDbgSendCmd.currentText()
-        self.scpi_aoip.send_request(str)
+        rx = self.scpi_aoip.send_request(str)
+        if rx and len(rx) > 0:
+            self.add_debug_cmd(str)
+
 
     def send_debug_giv(self):
         str = self.pw.cBoxDbgSendCmd.currentText()
-        self.scpi_giv4.send_request(str)
+        rx = self.scpi_giv4.send_request(str)
+        if rx and len(rx) > 0:
+            self.add_debug_cmd(str)
 
     def route_debug_widgets(self):
         self.pw.pBtSendRly.clicked.connect(self.send_debug_rly)

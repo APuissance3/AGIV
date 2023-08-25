@@ -92,18 +92,22 @@ class CMeasuresTab(QThread):
             self.state = CMeasSt.measures_abort
             pass
     
+    def slot_run_measure_after_calibration(self, msg):
+        self.phmi.tabWidget.setCurrentIndex(1) # Activate measures Tab
+        self.pbt_start_stop_cliqued()  # Simulate start measures
+        pass
+
     def pbt_repport_cliqued(self):
         db = get_database() # Get connector opened by MainApplication 
         gid = get_giv_id()
         self.phmi.Qmessages_print("Construction du rapport de mesures ...")
         gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
-        curdir = os.path.abspath(os.getcwd())
-        filename = curdir + "\\Report_{}.xlsx".format(gid)
+        filename = get_Agiv_dir() + "\\Report_{}.xlsx".format(gid)
         #strlink = '<a href="{}>the file</a>"'.format(filename)
         try:
             save_XLSreport(filename)        
             # self.phmi.QTextConsole.insertHtml(strlink)
-            self.phmi.Qmessages_print("OK. Chemin: \n" + filename)
+            self.phmi.Qmessages_print(f'OK. Chemin:\n "{filename}"')
         except PermissionError:
             self.phmi.Qmessages_print("KO. Creation impossible.\n"\
                         "Fermez le fichier rapport précédent.", color = q_red_color)
@@ -143,6 +147,8 @@ class CMeasuresTab(QThread):
 
         # First step after "start": build the list of ranges to check
         if self.state == CMeasSt.init_list:
+            db = get_database() # Get connector opened by MainApplication 
+            db.register_measure_start()
             self.list_ranges_selected.clear()
             self.phmi.pBtRunMeasures.setText("STOP MESURES")
             for range_view in self.list_ranges: # Build the list of the range to check
