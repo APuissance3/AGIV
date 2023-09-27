@@ -32,8 +32,23 @@ class CSerialScpiConnexion(QObject):
     #sigTest= QtCore.pyqtSignal()
 
 
-    list_com_ports = None   # Free Com port list 
+    list_com_ports = []   # Com port list
+    list_used_com = []      # Used port list
     last_time = time.perf_counter()
+
+    
+    @classmethod
+    def initialise_com_ports(cls):
+        if cls.list_com_ports == None:
+            cls.list_com_ports = cls.find_COM_devices()
+
+    @classmethod
+    def register_used_port(cls, port_name):
+        cls.list_used_com.append(port_name)
+
+    @classmethod
+    def is_used_port(cls, port_name):
+        return port_name in cls.list_used_com
 
     @classmethod
     def find_COM_devices(cls):
@@ -41,13 +56,9 @@ class CSerialScpiConnexion(QObject):
         myports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
         #print(myports)
         usb_port_list = [p[0] for p in myports]
-        print("Find ports: {}".format(usb_port_list))
+        #print("Find ports: {}".format(usb_port_list))
         return usb_port_list
-    
-    @classmethod
-    def initialise_com_ports(cls):
-        if cls.list_com_ports == None:
-            cls.list_com_ports = cls.find_COM_devices()
+
 
     @classmethod
     def get_dt(cls):
@@ -58,22 +69,34 @@ class CSerialScpiConnexion(QObject):
         str = "{:07.3F}s-".format(dt)
         return dt,str
 
+    @classmethod
+    def update_awailable_ports(cls):
+        removed = False
+        cls.list_com_ports = cls.find_COM_devices() 
+        for com in cls.list_used_com:
+            if not com in cls.list_com_ports:
+                cls.list_used_com.remove(com)
+                removed = True
+        return removed
+
 
     def __init__(self, id_name, color=None,  time_out=None, simulate=False, parent=None):
         super(CSerialScpiConnexion, self).__init__(parent)
-        self.initialise_com_ports() # Buil com port list if it is not make yet
+        #self.initialise_com_ports() # Buil com port list if it is not make yet
         self.id_string = None
         self.device_port = None
-        self.simulate = simulate
+        self.strerr = None
+        self.flg_simulate = simulate
         self.color = color       # Optional color passed to display the exchange in a terminal
         self.time_out = time_out if time_out is not None else 0.5
-        if not self.simulate:
+        if not self.flg_simulate:
             self.try_connect(id_name)
             self.rx = None
+            # Now, support port deconnexion. So it is normal that no device_port found
             # self.tx = None
-            if self.device_port == None:
-                txt = "Can't find the requested device with id = '{}'".format(id_name)
-                raise ConnectionError(txt )
+            #if self.device_port == None:
+            #    txt = "Can't find the requested device with id = '{}'".format(id_name)
+            #    raise ConnectionError(txt )
             self.get_dt()    # Initialise 
         else:
             self.rx= id_name
@@ -81,27 +104,38 @@ class CSerialScpiConnexion(QObject):
 
     def __del__(self):
         if self.device_port is not None:
-            self.device_port.close()
+            try:
+                self.device_port.close()
+            except Exception:
+                pass
             self.list_com_ports.append(self.device_port)
             self.device_port = None
 
+ 
 
     def send_request(self, str_tx, _sleep=None):
         """ Send a request to the device, and wait for the response.
         Send a signal with the exchange at the the end of a success exchange """
+        str_rx = ""
 
+        if self.device_port == None:
+            return str_rx
+        
         (dt,st1) = self.get_dt()
         msg_tx = st1 + " TX>" + str_tx
         print(msg_tx)
         str_tx += '\n'      # Add the term character to the command
 
-        if self.simulate:   #  We doesnt send and wait
+        if self.flg_simulate:   #  We doesnt send and wait
             msg_rx = st1 + " RX> "
             self.sigRequestComplete.emit(msg_tx + '\n' + msg_rx, self.color, SMALL_FONT)
             return ""
 
-        self.device_port.flush()
-        self.device_port.write(str_tx.encode())  # encode is required to convert str to byte[]
+        try:
+            self.device_port.flush()
+            self.device_port.write(str_tx.encode())  # encode is required to convert str to byte[]
+        except Exception:
+            pass
         sleep = _sleep if _sleep is not None else 0.0  # Use provided sleep if given 
         if (sleep > 0.0):
             time.sleep(sleep)
@@ -109,8 +143,11 @@ class CSerialScpiConnexion(QObject):
             print(st2 + "end wait")
         else:
             print("        -no wait")
-        str_rx= str(self.device_port.readline()).replace("\\r","").replace("\\n","") \
+        try:
+            str_rx= str(self.device_port.readline()).replace("\\r","").replace("\\n","") \
                                                 .replace("'","").replace("b","")
+        except:
+            pass
         (dt,st) = self.get_dt()
         # if we receive a response, emit the signal RequestComplete
         if len(str_rx) > 0:
@@ -124,22 +161,34 @@ class CSerialScpiConnexion(QObject):
     def try_connect(self, id_name):
         """ Request the identification string on all the awailable comports 
         to etablish the connection with the requested device """
-        for s_port in self.list_com_ports:
+        #self.list_com_ports = self.find_COM_devices()
+        self.update_awailable_ports()
+
+        for s_port in CSerialScpiConnexion.list_com_ports:
+            if s_port in CSerialScpiConnexion.list_used_com:
+                continue
+
             self.device_port = serial.Serial( 
                 port = s_port,
                 baudrate = 115200,      # N,8,1 by default 
                 timeout = self.time_out
             )
+            # If the port is already open, we ca'nt use it 
             if not self.device_port.is_open:
-                 self.device_port.open()
+                self.device_port.open()
+
             rx = self.send_request("*idn?")
             if id_name not in rx:   # This is not the requested alue
-                self.device_port.close()
+                try:
+                    self.device_port.close()
+                except Exception:
+                    pass
                 self.device_port = None
             else:
                 self.id_string = rx    # Note complete ID string
                 # Remove this port from the free com port list
-                self.list_com_ports.remove(s_port) 
+                #self.list_com_ports.remove(s_port) 
+                self.register_used_port(s_port)
                 self.sigRequestComplete.emit(
                         " Receive IDN on {} port: {}".format(s_port, rx), self.color, SMALL_FONT)
                 break       # we are connected with the required device

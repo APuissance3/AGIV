@@ -68,7 +68,7 @@ def get_main_window():
     return AppMW
 
 """" Utile pour avoir l'etat de la checkbox overwrite au moment des calculs """
-def get_overwrite_flag():
+def get_overwrite_cBox():
     flg_overwrite = True if get_main_window().cBoxRazCalib.isChecked() else False
     return flg_overwrite
 

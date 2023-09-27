@@ -14,17 +14,17 @@ import os, sys
 from pathlib import Path
 
 # Our classes 
-from .CCalibrateTab import CCalibrateTab
-from .CMeasuresTab import CMeasuresTab
+from .MainWindow import Ui_MainWindow
+from .CTabAvanced import CTabAvanced
+from .CTabCalibrate import CTabCalibrate
+from .CTabMeasures import CTabMeasures
 from .CDevicesDriver import CDevicesDriver, create_devices_driver, get_devices_driver
 from .CConfigFile import CConfigFile, create_config_file_instance, get_config_file
-from .MainWindow import Ui_MainWindow
 from .Utilities import *
 from .GivUtilities import *
 from .CDBManager import  initialise_database
 from .CLogger import create_logger, get_logger
 from .XlsReportGenerator import set_xls_flg_last_day_only, set_xls_flg_last_meas_only 
-
 
 
 class MainWindow(QtWidgets.QMainWindow, 
@@ -49,8 +49,9 @@ class MainWindow(QtWidgets.QMainWindow,
  
         self.label_Titre.setText(self.config['Titre'])
 
-        self.cm_tab = CMeasuresTab(self)
-        self.cc_tab = CCalibrateTab(self)
+        self.cm_tab = CTabMeasures(self)
+        self.cc_tab = CTabCalibrate(self)    
+        self.ctab_avanced = CTabAvanced(self)
 
         self.cm_tab.sig_info_message.connect(self.Qmessages_print) # Connect signals info_message to our print function
         self.cc_tab.sig_info_message.connect(self.Qmessages_print)
@@ -159,7 +160,8 @@ def start_module_application():
         
         sys.exit(1)
 
-    db = initialise_database("AP3reports_rec")
+    # db = initialise_database("AP3reports_rec")
+    db = initialise_database("etalonnage")
 
     log = create_logger()
 
@@ -169,13 +171,16 @@ def start_module_application():
 
 
     #Enable for Debug by default
-    AppMW.cBoxAdvanced.setChecked(False)
+    #AppMW.cBoxAdvanced.setChecked(False)
 
     #Enable or disable advanced Tab function og advanced flag in the config file
     options= cfg_object.config['Options']
-    enable_avanced = options['advanced']
-    AppMW.tabWidget.setTabEnabled(2, enable_avanced)
-    if not enable_avanced:
+    enable_avanced_tab = options['advanced_tab']
+    AppMW.tabWidget.setTabEnabled(2, enable_avanced_tab)
+    enable_avanced_box = options['advanced_box']
+    AppMW.cBoxAdvanced.setChecked(enable_avanced_box)
+
+    if not enable_avanced_tab:
         AppMW.cBoxAdvanced.setChecked(False)
     AppMW.change_advanced_mode()
     
@@ -207,31 +212,30 @@ def start_module_application():
     d_drv = None
     d_drv = create_devices_driver(
             cfg_object.config, AppMW.Qmessage_sscpi_print, AppMW)
-    if d_drv.str_error is not None:
-        # Stop if there is an error at the initialisation
-        AppMW.disable_MainWindow_with_error(d_drv.str_error) 
-        d_drv.send_stop_remote() 
-        if d_drv.scpi_giv4 == None:
-            msg_dialog_Error("GIV4 non trouvé. Vous devez le brancher avant de lancer"
-                " le banc.")
-        else:
-             msg_dialog_Error(d_drv.str_error)
-        #  pour lesz test exit(1)
+    err = d_drv.scpi_relays.strerr
+    if err:
+        AppMW.display_error(err)
+        msg_dialog_Error(err)
+
+    err = d_drv.scpi_aoip.strerr
+    if err:
+        AppMW.display_error(err)
+        msg_dialog_Error(err)
+
+    # Register devices for debug commands
+    AppMW.ctab_avanced.register_device("relay_device", d_drv.scpi_relays)
+    AppMW.ctab_avanced.register_device("aoip_device", d_drv.scpi_aoip)
+    AppMW.ctab_avanced.register_device("giv4_device", d_drv.scpi_giv4)
 
     # Get Calibrator datas and register it into DB
-    if d_drv.scpi_aoip is not None:
+    if d_drv.scpi_aoip.device_port is not None:
         aoip_data = d_drv.get_aoip_datas()
         db.register_Aoip_in_DB(aoip_data)
 
     # Get GIV4 S/N and Set log file according to giv identifiant
-    giv_id = get_giv_id(d_drv.scpi_giv4)
-    db.register_giv(giv_id)  # The next records link with this GIV
-    (giv_date, db_giv_date) = get_giv_caldate(d_drv.scpi_giv4)
-    db.register_giv_last_cal_date(db_giv_date, giv_id) # Register the Lock date
-    AppMW.lEIdentifiant.textChanged.connect(AppMW.init_log_name)  
-    AppMW.lEIdentifiant.setText(f"{giv_id}")
-    AppMW.lE_DateCalib.setText(giv_date)
-
+    
+    d_drv.register_new_giv()  # Get Giv_id, and register it if it is new
+    d_drv.check_for_giv()
     # Check if GIV is looked. If Yes, ask to unlock
     giv_lock = is_giv_locked(d_drv.scpi_giv4)
     

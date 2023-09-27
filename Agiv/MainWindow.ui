@@ -443,7 +443,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="pBtGenerateRepport_2">
+     <widget class="QPushButton" name="pBtGenerateAllGIVs">
       <property name="geometry">
        <rect>
         <x>660</x>
@@ -628,9 +628,9 @@
    <widget class="QLineEdit" name="lEIdentifiant">
     <property name="geometry">
      <rect>
-      <x>400</x>
+      <x>440</x>
       <y>450</y>
-      <width>201</width>
+      <width>161</width>
       <height>21</height>
      </rect>
     </property>
@@ -654,7 +654,7 @@
      <rect>
       <x>310</x>
       <y>450</y>
-      <width>81</width>
+      <width>121</width>
       <height>20</height>
      </rect>
     </property>
@@ -664,7 +664,7 @@
      </font>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Identifiant&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Identifiant GIV4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
    <widget class="QLabel" name="lbl_LastEtal">

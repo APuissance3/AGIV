@@ -2,12 +2,12 @@
 """ This module contains utilities function for working with Giv  """
 from datetime import datetime, timedelta
 
-REF_DATE = datetime.fromisoformat('2021-01-01')
+REF_DATE = datetime.fromisoformat('2020-01-01')
 
-_giv_id = None
+_giv_id = ''
 def get_giv_id(giv_scpi=None):
     global _giv_id
-    if _giv_id == None:
+    if True or _giv_id == None:
         cmd = ":SYST:LOCK:CODE?"
         rx = "SIM_000.100"
         if giv_scpi is not None:
@@ -15,13 +15,21 @@ def get_giv_id(giv_scpi=None):
             _giv_id = rx
     return(_giv_id)
 
+def get_last_giv_id():
+    return(_giv_id)
+
+def reset_last_giv_id():
+    global _giv_id
+    _giv_id =''
+
 def is_giv_locked(giv_scpi):
-    ret = True
-    if giv_scpi is not None:
+    ret = False
+    if giv_scpi.device_port is not None:
+        ret = True
         cmd = ":SYST:LOCK?"
         rx = giv_scpi.send_request(cmd)
         # If 'UNlocked' return False
-        if 'UN' in rx: ret= False
+        if len(rx)>0 and 'UN' in rx: ret= False
     else:
         ret = False
     return (ret)

@@ -44,6 +44,7 @@ def _main():
                             'PySide2>=5.15.2',
                             'PyYAML>=6.0',
                             'openpyxl==3.0.9',
+                            'psycopg2>=2.9.6'
                             ],
         description = 'Installation des sources python et dependances pour le banc de d\'etalonnage du GIV4',
         zip_safe = False

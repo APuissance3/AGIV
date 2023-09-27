@@ -12,7 +12,7 @@ from .CRangeStatusLayout import CRangeStatusLayout
 from threading import get_ident
 from enum import Enum, unique
 from .CDBManager import get_database, CDBManager
-from .XlsReportGenerator import gen_measures_XLSreport, save_XLSreport
+from .XlsReportGenerator import gen_measures_XLSreport, gen_giv_comparaison_report, save_XLSreport
 
 # Enum for the states of state machine
 class CMeasSt(Enum):
@@ -27,18 +27,18 @@ def dbg_print(*args,**kwargs):
     pass
     # print(*args,**kwargs)
 
-class CMeasuresTab(QThread):
+class CTabMeasures(QThread):
     """ This class add attributes to manage the measures panel """
 
     # This signal is emited to display messages 
     # argument: message, color, font
     sig_info_message = Signal(object, object, object)
     sig_register_range = Signal(object)
-    sig_register_value =Signal(object,object)
+    sig_register_value =Signal(object,object,object)    # Used to send ref, value, check_ok to database
 
     def __init__(self, _parent=None):
         """ parent is the Mainwindow Widget  """
-        super(CMeasuresTab, self).__init__()
+        super(CTabMeasures, self).__init__()
         # The ranges list 
         self.vRangesLayout = createVLayerForScroll(_parent.scrollMeasRange)
         # The measures list
@@ -54,6 +54,7 @@ class CMeasuresTab(QThread):
         self.old_state = None # For debug
         self.cur_range_indx = 0
         self.cur_range = None
+        self.timer_divider = 0
 
         # Read our ranges data and fill ranges comboBox       
         self.cfg_ranges = get_config_ranges()
@@ -67,7 +68,8 @@ class CMeasuresTab(QThread):
         self.phmi.pBtSMeasSelectAll.clicked.connect(self.select_all_range)
         self.phmi.pBtMeasUnselectAll.clicked.connect(self.unselec_all_range)
         self.phmi.pBtRunMeasures.clicked.connect(self.pbt_start_stop_cliqued)
-        self.phmi.pBtGenerateRepport.clicked.connect(self.pbt_repport_cliqued)
+        self.phmi.pBtGenerateRepport.clicked.connect(self.pbt_repport_one_Giv_cliqued)
+        self.phmi.pBtGenerateAllGIVs.clicked.connect(self.pbt_repport_All_Giv_cliqued)
         # self.phmi.pBtGenerateRepport.connect(self.pbt_repport_left_click)  Not exist, must build a specific button if needed 
         self.timer.timeout.connect(self.timer_state_machine)
         self.timer.start(500)   # Check state machine every 500mS
@@ -96,13 +98,33 @@ class CMeasuresTab(QThread):
         self.phmi.tabWidget.setCurrentIndex(1) # Activate measures Tab
         self.pbt_start_stop_cliqued()  # Simulate start measures
         pass
+    
+    """ Rapport excel de tous les GIVs """
+    def pbt_repport_All_Giv_cliqued(self):
+        self.pbt_repport_cliqued(one_giv = False) # False: Comparison report
 
-    def pbt_repport_cliqued(self):
+    def pbt_repport_one_Giv_cliqued(self):
+        self.pbt_repport_cliqued(one_giv = True) # False: Comparison report
+
+    def pbt_repport_cliqued(self, one_giv = True):
+        """ Display all measure of a gived GIV """
         db = get_database() # Get connector opened by MainApplication 
-        gid = get_giv_id()
         self.phmi.Qmessages_print("Construction du rapport de mesures ...")
-        gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
-        filename = get_Agiv_dir() + "\\Report_{}.xlsx".format(gid)
+        if one_giv:
+            # Read GIV_id in the HMI, so you could request a report for another GIV that the one connected
+            gid = self.phmi.lEIdentifiant.text() 
+            gkey = db.get_giv_key(gid)
+            if  gkey != None:
+                filename = get_Agiv_dir() + f"\\Report_{gid}.xlsx"
+                gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
+            else:
+                play_echec()
+        else:
+            #date = db.get_db_date()[:-3].replace(' ','_').replace(':','h')
+            date = db.get_db_date()
+            filename = get_Agiv_dir() + f"\\All_Givs_Report_{date}.xlsx"
+            gen_giv_comparaison_report(db)  # Read last records od all givs
+
         #strlink = '<a href="{}>the file</a>"'.format(filename)
         try:
             save_XLSreport(filename)        
@@ -129,7 +151,15 @@ class CMeasuresTab(QThread):
             dbg_print("State change to {}".format(self.state) )
             self.old_state = self.state
          
-        if self.state == CMeasSt.wait:  # Normal standby state            
+        if self.state == CMeasSt.wait:  # Normal standby state  
+            # Now, we loock for GIV changed  connection every 4x500mS
+            self.timer_divider +=1
+            if self.timer_divider > 4:
+                dd = get_devices_driver()
+                self.timer_divider = 0
+                #Check only if the calibration is not running
+                if not self.phmi.cc_tab.running:
+                    dd.check_for_giv(self.phmi.Qmessage_sscpi_print)
             return
 
         if self.state == CMeasSt.measures_abort:
@@ -190,11 +220,21 @@ class CMeasuresTab(QThread):
                 self.phmi.pBtRunMeasures.setText("START MESURES")
                 strinfo = "Fin des relevés\n"
                 self.sig_info_message.emit(strinfo, q_green_color, NORMAL_FONT)
+                ok = self.check_measured_range_status()
+                dummy = play_success() if ok else play_echec()
                 dbg_print("State ====>   goto wait")
             else:
                 dbg_print("State ====>   goto init_range")
                 self.state = CMeasSt.init_range # Go on next range
             return
+
+
+    def check_measured_range_status(self):
+        all_ok = True
+        for range in self.list_ranges_selected:
+            if range.cal_status != True:
+                all_ok = False
+        return all_ok
 
 
     def  select_a_range(self, selected_range):
@@ -254,7 +294,7 @@ class CMeasuresTab(QThread):
             a_point.update_indicator_color()
             # Register measure in database
             # db.register_measure(val_send, val_read)
-            self.sig_register_value.emit(val_send, val_read)
+            self.sig_register_value.emit(val_send, val_read, not a_point.check) # Register ref, val, and Ko/Ok
             if a_point.check == False:
                 range_status = False
         return range_status

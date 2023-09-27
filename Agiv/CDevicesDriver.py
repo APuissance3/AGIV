@@ -11,6 +11,8 @@ from .CSerialScpiConnexion import *
 import re
 #import os       # file i/o for debug combobox
 from .Utilities import *
+from .GivUtilities import get_giv_id, get_giv_caldate, get_last_giv_id, reset_last_giv_id
+from .CDBManager import get_database
 import time
 
 color_cyan = QColor(51,175,255)
@@ -64,42 +66,96 @@ class CDevicesDriver(QtCore.QObject):
         self.range_data = None
         self.pw = pw
 
-        self.init_combo_debug()
+        #self.init_combo_debug()
 
-        devices_properties_list =\
+        self.devices_properties_list =\
         [
             ('scpi_relays',',AGIV', color_cyan, 'avec le banc AGIV', None),
             ('scpi_aoip',',CALYS', color_bluepurple, 'avec le CALYS', 2.0),
             ('scpi_giv4', ',GIV4', color_red_purple, 'avec le GIV4', None)
         ]
-        for (attrib, idn, color, msg, timeout) in devices_properties_list:
-            try:
-                scpi = CSerialScpiConnexion(idn, color, timeout, self.flg_simulate)
-                setattr(self, attrib, scpi) # Store the device
-                if print_funct is not None:
-                    self.sig_communication_error.connect(print_funct)
-                    scpi.sigRequestComplete.connect(print_funct)
-                    scpi.sigRequestComplete.emit(
-                            'IDN {} found on {}\n{}'.format(idn, 
-                            scpi.device_port.name,
-                            scpi.id_string), color, SMALL_FONT)
-            except ConnectionError:
-                self.str_error = "Pas de connexion " + msg
-                #raise ConnectionError(self.str_error)
+        for (attrib, idn, color, msg, timeout) in self.devices_properties_list:
+            self.get_serial_scpi_connection(attrib, idn, color, msg, print_funct, timeout)
+
+            #try:
+            #    scpi = self.get_serial_scpi_connection(attrib, idn, color, msg, print_funct, timeout)
+            #except ConnectionError:
+            #    self.str_error = "Pas de connexion " + msg
+            #    #raise ConnectionError(self.str_error)
         if self.flg_simulate:
             self.scpi_giv4 = None   # The other function could work with that
 
         # Go device to remote mode
-        if self.scpi_aoip:
+        if self.scpi_aoip.device_port != None:
             self.scpi_aoip.send_request("*CLS;:REM;:SYST:ERR?")       # AOIP go in REMote mode
-        if self.scpi_giv4:
-            self.scpi_giv4.send_request("*CLS;:REM;:SYST:ERR?") 
-
         # Connect debuging tools 
-        self.route_debug_widgets()
+        #self.route_debug_widgets()
+
+    def get_serial_scpi_connection(self, attrib, idn, color, msg, print_funct, timeout):
+        scpi = CSerialScpiConnexion(idn, color, timeout, self.flg_simulate)
+        setattr(self, attrib, scpi) # Store the device in scpi_xxxx 
+        scpi_dev = getattr(self,attrib)
+        if print_funct is not None:
+            self.sig_communication_error.connect(print_funct)
+            scpi_dev.sigRequestComplete.connect(print_funct)
+            if scpi_dev.device_port != None:
+                scpi_dev.sigRequestComplete.emit(
+                        'IDN {} found on {}\n{}'.format(idn, 
+                        scpi.device_port.name,
+                        scpi.id_string), color, SMALL_FONT)
+                scpi_dev.strerr = None
+            else:
+                scpi_dev.strerr = f"Pas de connexion {msg}."
+        return scpi
+        
+
+    def register_new_giv(self):
+        old_giv_id = get_last_giv_id()
+        try:
+            giv_id = get_giv_id(self.scpi_giv4)
+        except:
+            return  # No Giv connected Do nothing
+        # if the giv_id is changed, register nex Id
+        if (giv_id != '' and old_giv_id != giv_id):
+            # Get GIV4 S/N and Set log file according to giv identifiant
+            #giv_id = get_giv_id(d_drv.scpi_giv4)
+            self.scpi_giv4.send_request("*CLS;:REM;:SYST:ERR?") 
+            db = get_database()
+            db.register_giv(giv_id)  # The next records link with this GIV
+            (giv_date, db_giv_date) = get_giv_caldate(self.scpi_giv4)
+            db.register_giv_last_cal_date(db_giv_date, giv_id) # Register the Lock date
+            self.pw.lEIdentifiant.textChanged.connect(self.pw.init_log_name)  
+            self.pw.lE_DateCalib.setStyleSheet("color: black")
+            self.pw.lEIdentifiant.setText(f"{giv_id}")
+            self.pw.lE_DateCalib.setText(giv_date)
+
+    
+
+    """ Function to check if the giv is connected or not """
+    def check_for_giv(self, print_slot = None):
+        idn = self.devices_properties_list[2][1]
+        #if self.scpi_giv4. is None:
+        #    (attr,idn,color,msg,to) = self.devices_properties_list[2]
+        #    self.get_serial_scpi_connection(attr, idn, color, print_slot, to)
+        if self.scpi_giv4.device_port is None:
+            self.scpi_giv4.try_connect(idn)
+            # If we find giv on a new port, register it
+            if self.scpi_giv4.device_port is not None:
+                self.register_new_giv()
+        else:
+            # Check all ports
+            removed = CSerialScpiConnexion.update_awailable_ports()
+            if removed:
+                self.scpi_giv4.try_connect(idn)  # Check if GIV is still here  
+                if self.scpi_giv4.device_port is None:
+                    self.pw.lE_DateCalib.setStyleSheet("color: red")
+                    self.pw.lE_DateCalib.setText("Giv débranché")
+                    reset_last_giv_id()
+                    pass 
+
 
     def send_stop_remote(self):
-        self.save_combo_debug()
+        #self.save_combo_debug()
         """ Called at the end of the applicatiion """
         if self.scpi_aoip:
             self.scpi_aoip.send_request('*CLS;:LOC;:SYST:ERR?')  # Switch to local mode
@@ -166,34 +222,77 @@ class CDevicesDriver(QtCore.QObject):
         giv_wait_time = self.cfg_file['Commands']['giv_meas_time']
         giv_meas_cmd = self.cfg_file['Commands']['giv_mes']
         giv_out_cmd = self.cfg_file['Commands']['giv_out']
-        # direction of the measure: on Giv or on Aoip
-        measure_on = self.range_data['measure_on']
+
+        # Old version: direction of the measure: on Giv or on Aoip
+        if 'measure_on' in self.range_data:
+            measure_on = self.range_data['measure_on']
         rx=''
 
-        # Output on GIV, measure on Aoip ---------------
-        if 'aoip' in measure_on:
-            if self.scpi_giv4:
-                self.scpi_giv4.send_request(giv_out_cmd.format(val))
-            if self.flg_simulate:
-                return float(val)+0.001
-            # For the AOIP, we repeat the answer until we have a response
-            retry = 3
-            while retry > 0 and len(rx) == 0: # retry until we have a response 
-                retry -= 1
-                time.sleep(aoip_wait_time)  # Wait for measure stabilisation
-                print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
-                rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
-            rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
+        # Nouvelle version d'acces au check_value. Ajouté pour plus de souplesse, notament pour la relecture du GIV
+        if 'set_val' in self.range_data and 'get_val'  in self.range_data:
+            read_val = 0.0
+            set_get = [self.range_data['set_val'], self.range_data['get_val']] # List of set and get instructions
+            for device in set_get:
+                feature = device[0].lower()
+                scpidev = self.scpi_giv4 if 'GIV4' in device[1] else self.scpi_aoip                
+                sendmsg = device[2].replace('{v}',f'{val}') # send message with value insertion
+                ackget = device[3].replace('{v}',f'{val}')  # request message with value insertion if necessary
+                wait_time = giv_wait_time if scpidev == self.scpi_giv4 else aoip_wait_time
+                if len(device)>4:
+                    wait_time = device[4]   # Force wait time if it is specified
+                retry_ack = 2  if scpidev == self.scpi_giv4 else 4
+                rx=''
+                if 'set' in feature:    # Set reference: we wait only for the acknoledge
+                    if scpidev.flg_simulate:
+                        continue   # No check for response if simulated
 
-        #  Output on Aoip mesure on Giv  -------------------
-        elif 'giv' in measure_on:
-            self.send_aoip_cmde(aoip_out_cmd.format(val)) 
-            time.sleep(giv_wait_time)
-            print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
-            if self.scpi_giv4:
-               rx = self.scpi_giv4.send_request(giv_meas_cmd)
-            if self.flg_simulate:
-                return float(val)+0.001
+                    while retry_ack>0 and len(rx)==0 and scpidev!=None:  # Don't try if the connection is none
+                        retry_ack -= 1
+                        rx = scpidev.send_request(sendmsg, 0.5) # 0.5s time-out for response
+                        if ackget in rx:    # Ok
+                            break
+                    
+                elif 'get' in feature:  # here, the response contains the measured value
+                    if scpidev.flg_simulate:
+                        read_val = float(val)+0.001 # simulate a correct value
+                        continue   # No check for response if simulated
+                    while retry_ack>0 and len(rx)==0 and scpidev!=None:  # Don't try if the connection is none
+                        time.sleep(wait_time)  # Wait for measure stabilisation
+                        print(f"Wait {wait_time:03.1f}s for stabilisation")
+                        rx = scpidev.send_request(sendmsg, 0.5) # 0.5s time-out for response
+                        retry_ack -= 1
+                        if len(ackget)>0 and ackget in rx:    # Ok
+                            break
+                        rx = rx.split(',')[0]  # For AOIP,  keep only the value (eg: '9.999, mA')
+                if retry_ack == 0:
+                    raise ConnectionError(f"Echec de la commande {scpidev.id_string}\n'{sendmsg}'")
+
+        # Version originale: mesure sur GIV->AOIP ou sur AOIP->GIV
+        else: 
+            # Output on GIV, measure on Aoip ---------------
+            if 'aoip' in measure_on:
+                if self.scpi_giv4:
+                    self.scpi_giv4.send_request(giv_out_cmd.format(val))
+                if self.flg_simulate:
+                    return float(val)+0.001
+                # For the AOIP, we repeat the answer until we have a response
+                retry = 3
+                while retry > 0 and len(rx) == 0: # retry until we have a response 
+                    retry -= 1
+                    time.sleep(aoip_wait_time)  # Wait for measure stabilisation
+                    print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
+                    rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
+                rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
+
+            #  Output on Aoip mesure on Giv  -------------------
+            elif 'giv' in measure_on:
+                self.send_aoip_cmde(aoip_out_cmd.format(val)) 
+                time.sleep(giv_wait_time)
+                print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
+                if self.scpi_giv4:
+                    rx = self.scpi_giv4.send_request(giv_meas_cmd)
+                if self.flg_simulate:
+                    return float(val)+0.001
 
         try:
             read_val = float(rx.replace(' ',''))   
@@ -267,74 +366,3 @@ class CDevicesDriver(QtCore.QObject):
                 dev_adj_rep = datas[3]
         return(dev_name, dev_sn, dev_adj_date, dev_adj_rep)
     
-    """ 
-    
-                              Debug Widgets management 
-    
-    """
-
-
-    def save_combo_debug(self):
-        exit() # On sauve au fur et a mesure des commandes emises
-        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
-        with open(dbg_cmd_file,'w') as myfile:
-            for i in range (self.pw.cBoxDbgSendCmd.count()):
-                txt = self.pw.cBoxDbgSendCmd.itemText(i)
-                myfile.write(txt+'\n')
-
-    def init_combo_debug(self):
-        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
-        try:
-            with open(dbg_cmd_file,'r') as myfile:
-                self.pw.cBoxDbgSendCmd.clear()
-                txt = myfile.readline().replace('\n','')
-                while txt:
-                    print ("cmd: '"+ txt + "'")
-                    self.pw.cBoxDbgSendCmd.addItem(txt)
-                    txt = myfile.readline().replace('\n','')
-        except Exception as ex:
-            pass
-
-    """ Ajoute la commande au fichier de debug """
-    def add_debug_cmd(self, cmd):
-        dbg_cmd_file = get_Agiv_dir() + '//' + CMD_BOX_FILE
-        newcmd = True
-        try:
-            with open(dbg_cmd_file,'r') as myfile:
-                txt = myfile.readline().replace('\n','')
-                while txt:
-                    if txt == cmd:
-                        newcmd = False
-                    txt = myfile.readline().replace('\n','')
-        except Exception as ex:
-            pass
-        if newcmd:  # Ajoute commande si pas deja presente
-            with open(dbg_cmd_file,'a') as myfile:
-                myfile.write(cmd+'\n')
-                #self.pw.cBoxDbgSendCmd.addItem(cmd)
-            #print("cmd {} added".format(cmd))
-
-
-
-
-    def send_debug_rly(self):
-        str = self.pw.cBoxDbgSendCmd.currentText()
-        rx = self.scpi_relays.send_request(str)
-
-    def send_debug_aoip(self):
-        str = self.pw.cBoxDbgSendCmd.currentText()
-        rx = self.scpi_aoip.send_request(str)
-        if rx and len(rx) > 0:
-            self.add_debug_cmd(str)
-
-
-    def send_debug_giv(self):
-        str = self.pw.cBoxDbgSendCmd.currentText()
-        rx = self.scpi_giv4.send_request(str)
-        if rx and len(rx) > 0:
-            self.add_debug_cmd(str)
-
-    def route_debug_widgets(self):
-        self.pw.pBtSendRly.clicked.connect(self.send_debug_rly)
-        self.pw.pBtSendAoip.clicked.connect(self.send_debug_aoip)
-        self.pw.pBtSendGiv.clicked.connect(self.send_debug_giv)
