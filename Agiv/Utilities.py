@@ -42,10 +42,15 @@ def msg_dialog_confirm(strmessage, title):
     ret = msg.exec_()
     return (ret == QMessageBox.Yes)
 
-""" Retourne le chemin Agiv dans le home (soit %userprofile%/Agiv sous Windows) """
-def get_Agiv_dir():
-    home = str(Path.home())
-    agiv_dir = os.path.join(home,'Agiv')
+""" Retourne le chemin Agiv dans le home (soit %userprofile%/Agiv sous Windows) 
+    ou  celui indiqué dans la liste option
+"""
+def get_Agiv_dir(cfg_options=None):
+    if cfg_options != None and 'reports_directory' in cfg_options:
+        agiv_dir = cfg_options['reports_directory']
+    else:
+        home = str(Path.home())
+        agiv_dir = os.path.join(home,'Agiv')
     return agiv_dir
 
 def play_success():

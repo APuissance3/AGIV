@@ -3,9 +3,9 @@ import datetime as dt
 
 log = None
 
-def create_logger():
+def create_logger(filename=None):
     global log
-    log = CLogger()
+    log = CLogger(filename)
     return log
 
 def get_logger():

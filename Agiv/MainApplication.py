@@ -2,7 +2,7 @@
 # to convert ui file: 
 # pyside2-uic MainWindow.ui -o MainWindow.py
 # Note: Résolution machine virtuelle: 1364 x 671
-
+# Evolution du 22/01/2024 (retourche requette dans CDBManager)
 # Note: Point d'entré du module: main() en fin de fichier, qui appelle start_module_application()
 
 
@@ -66,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow,
 
     def init_log_name(self, str):
         log = get_logger()
-        logfilename = get_Agiv_dir() + '\\' + 'log_'+ str + '.txt'
+        logfilename = get_Agiv_dir(get_config_file()["Options"]) + '\\' + 'log_'+ str + '.txt'
         log.log_change_name(logfilename)
         #xls_file.set_filename('Report_'+str+'.xlsx')
 
@@ -144,11 +144,6 @@ def msg_dialog_unlock():
 
 
 def start_module_application():
-    agiv_dir = get_Agiv_dir()
-    try:
-        os.mkdir(agiv_dir)
-    except Exception as ex:
-        pass
 
     app = QApplication([])
 
@@ -163,10 +158,9 @@ def start_module_application():
     # db = initialise_database("AP3reports_rec")
     db = initialise_database("etalonnage")
 
-    log = create_logger()
 
     AppMW = MainWindow()
-    AppMW.setWindowTitle("A Puissance 3 - AGIV")
+    AppMW.setWindowTitle("A Puissance 3 - AGIV V2.0 ELA 22/01/2024")
     set_main_window(AppMW)
 
 
@@ -179,6 +173,17 @@ def start_module_application():
     AppMW.tabWidget.setTabEnabled(2, enable_avanced_tab)
     enable_avanced_box = options['advanced_box']
     AppMW.cBoxAdvanced.setChecked(enable_avanced_box)
+
+    # Tente de modifier le chemin des rapports si disque réseau disponible
+    repport_dir = get_Agiv_dir(options)   # Chemin local par defaut
+    try:
+        os.mkdir(repport_dir)
+        print(f"Sauvegardes des rapports sous {repport_dir}")
+    except Exception as ex:
+        pass
+
+    log = create_logger() # The log name will be set with init_log_name()
+
 
     if not enable_avanced_tab:
         AppMW.cBoxAdvanced.setChecked(False)

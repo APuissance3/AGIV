@@ -295,7 +295,7 @@ class CDevicesDriver(QtCore.QObject):
                     return float(val)+0.001
 
         try:
-            read_val = float(rx.replace(' ',''))   
+            read_val = float(rx.replace(' ',''))   if len(rx)>0 else 0.0
         except ValueError:
             self.sig_communication_error.emits(
                 '!Valeur lue: "{}" incorrecte.\n'.format(rx)

@@ -1,0 +1,30 @@
+scpi_giv4
+:sour:volt:range 10V;:sour:volt 1V;:syst:err?
+
+:sour:volt:range 10V;
+:sour:volt 1V;:syst:err?
+*CLS ; :sour:volt:range 10V;:sour:volt 1V;:ERR?
+
+*CLS ; :sour:volt:range 200V;:sour:volt 150V; ERR?
+
+*CLS; SENSE2:FUNC CURRENT; ERR?
+
+*CLS;SENSE2:FUNC:CURRENT;SENSE2:CURRENT:RANGE 4MA;:ERR?
+
+
+*CLS; SENSE2:FUNC CURRENT;CURRENT:RANGE 4MA;:ERR?
+*CLS;SENSE2:CURRENT:SUPPLY ON;:ERR?
+*CLS; SENSE2:FUNC CURRENT;CURRENT:RANGE 4MA;CURRENT:SUPPLY OFF;:ERR?
+------------------  Trames OK   -------------------
+*CLS;:sour:volt:range 10V;:sour:volt 1V;:ERR?
+*CLS; SENSE2:FUNC CURRENT;:ERR?
+*CLS; SENSE2:CURRENT:RANGE 4MA;:ERR?
+*CLS; SENSE2:FUNC CURRENT;CURRENT:RANGE 4MA;:ERR?
+*CLS; SENSE2:FUNC CURRENT;CURRENT:RANGE 4MA;SUPPLY OFF;:ERR?
+*CLS; SENSE2:FUNC CURRENT;CURRENT:SUPPLY OFF;:ERR?
+
+:sour:curr 0.015 => Passe directement de U a I
+:sour:curr 16.2ma 
+sour:curr 12.36ma
+source:current:range 0ma    =>mesure courant 0-20mA
+SOUR:FUNC CURRENT;CURRENT:RANGE 25MA;

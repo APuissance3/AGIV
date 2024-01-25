@@ -1,5 +1,6 @@
 # This Python file uses the following encoding: utf-8
 # """ Store the calibration and measure records in a database """
+# Dernière modification du 22/01/2024: Amélioration sortie état individuel avec dernières mesures
 
 import sys
 #import pathlib
@@ -338,15 +339,16 @@ class CDBManager():
     def get_measure_sequences_by_date_for_registered_Giv(self ,date, only_last = False):
         """ Return the Start_keys for a Giv at one date """
         self.connect()
-        sqlcmd = "SELECT StartKey, to_char(MAX(DateMeas),'YYYY-MM-DD HH24:MI') FROM Measure_points "\
+        starts = list()
+        sqlcmd = "SELECT StartKey, to_char(MIN(DateMeas),'YYYY-MM-DD HH24:MI') FROM Measure_points "\
                  f"WHERE GivRef = {self.giv_key} AND DATE(DateMeas)= '{date}'"\
                  " GROUP BY StartKey ORDER BY StartKey DESC;"
                  # Test 19/09/2023 " GROUP BY StartKey ORDER BY StartKey DESC;"
         cur = self.cursor.execute(sqlcmd)
         if only_last:
-            starts = self.cursor.fetchone() 
+            starts.append(self.cursor.fetchone()) # Retourne une liste d'un element
         else:
-            starts= self.cursor.fetchall()
+            starts = self.cursor.fetchall()
         return starts
 
     def get_ranges_of_measures_by_date_and_start_for_registrered_Giv(self, date, start_key = None):
@@ -400,11 +402,12 @@ class CDBManager():
         """
         # On utilise une jointure avec la sous requete qui retourne les point de référence les plus récent 
         # des conditions demandées. Puis obtient le reste des infos rien que pour ces points
+        # Modif du 22/01/2024: Ajout  " {sql_start_key}" dans la jointure
         sqlcmd = f"SELECT  MaxDateMeas as dtm, mp.RangeRef, mp.RefVal, mp.MeasVal, mp.FlgKo "\
                  f"FROM Measure_points mp "\
                  f"JOIN ("\
 	             f"SELECT  to_char(MAX(DateMeas),'YYYY-MM-DD HH24:MI') as MaxDateMeas, RefVal FROM Measure_points "\
-	             f"WHERE GivRef = {self.giv_key} AND DATE(DateMeas)= '{date}' AND RangeRef = {range_id} "\
+	             f"WHERE GivRef = {self.giv_key} AND DATE(DateMeas)= '{date}' AND RangeRef = {range_id} {sql_start_key} "\
 	             f"GROUP BY RefVal "\
 	             f"ORDER BY RefVal "\
                  f")J_MaxDate ON J_MaxDate.Refval = mp.RefVal "\
@@ -478,7 +481,7 @@ if __name__ == "__main__":
 
     db = CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.97', port='5432')
     db.connect()
-    db.build_database()
+    #db.build_database()
 
     cfg_object = create_config_file_instance()   # Read config file and create an instance
     if cfg_object.config == None: # There is an error in config file
@@ -487,10 +490,10 @@ if __name__ == "__main__":
             cfg_object.strerr)
         
         sys.exit(1)
-    db.populate_database()
-    db.register_giv('494.647')
-    db.register_range('Sortie tension 0..100mV')
-    db.register_measure(0.002, 0.00234)
+    #db.populate_database()
+    db.register_giv('850.117')
+    #db.register_range('Sortie tension 0..100mV')
+    #db.register_measure(0.002, 0.00234)
     dates = db.get_dates_of_measures_for_registrered_Giv()
     date = dates[0][0]
     ranges_rec = db.get_ranges_of_measures_by_date_for_registrered_Giv(date)

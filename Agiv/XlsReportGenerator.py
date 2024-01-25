@@ -239,12 +239,13 @@ def get_Agiv_dir():
 
 
 if __name__ == "__main__":
-    giv_id = '256.012'
+    giv_id = '850.117'
     my_xls_name = 'report_'+giv_id+".xlsx"
-    my_xls_name = 'report_all_givs.xlsx'
-    db = CDBManager('AP3reports_rec')
-    gen_giv_comparaison_report(db)
-    #gen_measures_XLSreport(giv_id, db)
+    #my_xls_name = 'report_all_givs.xlsx'
+    #db = CDBManager('AP3reports_rec')
+    db = CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.97', port='5432')
+    #gen_giv_comparaison_report(db)
+    gen_measures_XLSreport(giv_id, db)
     curdir = get_Agiv_dir() #os.path.abspath(os.getcwd())
     filename = curdir + "\\" + my_xls_name
     save_XLSreport(filename)

@@ -110,19 +110,20 @@ class CTabMeasures(QThread):
         """ Display all measure of a gived GIV """
         db = get_database() # Get connector opened by MainApplication 
         self.phmi.Qmessages_print("Construction du rapport de mesures ...")
+        options = get_config_file()['Options']
         if one_giv:
             # Read GIV_id in the HMI, so you could request a report for another GIV that the one connected
             gid = self.phmi.lEIdentifiant.text() 
             gkey = db.get_giv_key(gid)
             if  gkey != None:
-                filename = get_Agiv_dir() + f"\\Report_{gid}.xlsx"
+                filename = get_Agiv_dir(options) + f"\\Report_{gid}.xlsx"
                 gen_measures_XLSreport(gid,db)  # Read all record for this GIV, write to excel file
             else:
                 play_echec()
         else:
             #date = db.get_db_date()[:-3].replace(' ','_').replace(':','h')
             date = db.get_db_date()
-            filename = get_Agiv_dir() + f"\\All_Givs_Report_{date}.xlsx"
+            filename = get_Agiv_dir(options) + f"\\All_Givs_Report_{date}.xlsx"
             gen_giv_comparaison_report(db)  # Read last records od all givs
 
         #strlink = '<a href="{}>the file</a>"'.format(filename)
