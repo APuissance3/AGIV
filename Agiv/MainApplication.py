@@ -5,6 +5,10 @@
 # Evolution du 22/01/2024 (retourche requette dans CDBManager)
 # Note: Point d'entré du module: main() en fin de fichier, qui appelle start_module_application()
 
+# V2.1 du 28/05/2024:
+# Modification syntaxe du fichier Bench_config pour pouvoir lire les mesures moyennées du Calys
+
+
 
 
 from PySide2.QtWidgets import QApplication, QMessageBox
@@ -100,6 +104,8 @@ class MainWindow(QtWidgets.QMainWindow,
             self.cBoxMultithread.show()
             self.cBoxWriteCal.setEnabled(True)
             self.cBoxRazCalib.setEnabled(True)
+            self.cm_tab.unselec_all_range()
+            self.cc_tab.unselec_all_range()
         else:
             self.cBoxMultithread.hide()
             # self.cBoxWriteCal.setChecked(True)
@@ -142,27 +148,49 @@ def msg_dialog_unlock():
     ret = msg.exec_()
     return (ret == QMessageBox.Yes)
 
+bench_version = "A Puissance 3 - AGIV V3.0 ELA 10/2024"
+
+def print_start_options():
+    print(f"AGIV_BENCH version: {bench_version}")
+    print ("options:")
+    print ("-cfg=<filename>  : choose specific configuration file (benchconfig.yaml by default)")
+    print ("-adv             : enable advanced box")
+    print ("-safe            : disable advanced box and advanced tab")
+
+def check_start_options():
+    """ Check arguments to choose config file and overide config options """
+    cfg = None
+    adv = False
+    safe = False
+    argv = sys.argv
+    for option in argv:
+        if "?" in option:
+            print_start_options()
+        if "-cfg=" in option:
+            cfg = option[5:]
+        if "-adv" in option:
+            adv = True
+        if "-safe" in option:
+            save = True
+    return(cfg,adv,safe)
 
 def start_module_application():
 
+    print("Start module application")
     app = QApplication([])
-
-    cfg_object = create_config_file_instance()   # Read config file and create an instance
+    (optcfg, optadv, optsafe) = check_start_options()
+    cfg_object = create_config_file_instance(optcfg)   # Read config file and create an instance
     if cfg_object.config == None: # There is an error in config file
         msg_dialog_Error("Chargement du fichier de configuration impossible.",
             "Vérifier la présence et la cohérence de benchconfig.yaml",
             cfg_object.strerr)
-        
         sys.exit(1)
 
-    # db = initialise_database("AP3reports_rec")
     db = initialise_database("etalonnage")
 
-
     AppMW = MainWindow()
-    AppMW.setWindowTitle("A Puissance 3 - AGIV V2.0 ELA 22/01/2024")
+    AppMW.setWindowTitle(bench_version)
     set_main_window(AppMW)
-
 
     #Enable for Debug by default
     #AppMW.cBoxAdvanced.setChecked(False)
@@ -170,9 +198,21 @@ def start_module_application():
     #Enable or disable advanced Tab function og advanced flag in the config file
     options= cfg_object.config['Options']
     enable_avanced_tab = options['advanced_tab']
-    AppMW.tabWidget.setTabEnabled(2, enable_avanced_tab)
     enable_avanced_box = options['advanced_box']
+    # starting arguments overide config file
+    if optsafe:
+        enable_avanced_tab= False
+        enable_avanced_box= False
+    elif optadv:
+        enable_avanced_tab= True
+        enable_avanced_box= True
+
+    if not enable_avanced_tab:
+        AppMW.cBoxAdvanced.setChecked(False)
+
+    AppMW.tabWidget.setTabEnabled(2, enable_avanced_tab)
     AppMW.cBoxAdvanced.setChecked(enable_avanced_box)
+    AppMW.change_advanced_mode()
 
     # Tente de modifier le chemin des rapports si disque réseau disponible
     repport_dir = get_Agiv_dir(options)   # Chemin local par defaut
@@ -185,9 +225,6 @@ def start_module_application():
     log = create_logger() # The log name will be set with init_log_name()
 
 
-    if not enable_avanced_tab:
-        AppMW.cBoxAdvanced.setChecked(False)
-    AppMW.change_advanced_mode()
     
     # For debug, only one thred
     #AppMW.cBoxMultithread.setChecked(False)
@@ -263,5 +300,6 @@ def start_module_application():
 
     sys.exit(exit)
 
-if __name__ == "__main__":
+if __name__ == "__main__" or __name__ =='Agiv.MainApplication':
+    print("arguments:", sys.argv)
     start_module_application()

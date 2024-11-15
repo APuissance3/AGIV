@@ -8,9 +8,12 @@ import os
 config_filename = "benchconfig.yaml"       
 config_file_instance = None
 
-def create_config_file_instance():
+def create_config_file_instance(filename= None):
     """ Create a instance of the AGIV config file """
     global config_file_instance
+    global config_filename
+    if filename:
+        config_filename = filename    
     config_file_instance = CConfigFile(config_filename)
     return config_file_instance
 

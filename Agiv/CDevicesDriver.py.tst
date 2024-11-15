@@ -4,6 +4,9 @@ AGIV bench. It could create an instance of this classe, that can be used by the 
 modules to drive the bench. The function get_devices_driver() permits to acces it
 as a global variable
 10/2024 V3 change: use config file to define the scpi devices properties
+
+Ce module comporte checkvalue() qui est utilisé pour faire la mesure
+
 """
 
 from PySide2 import QtCore
@@ -15,6 +18,7 @@ from .Utilities import *
 from .GivUtilities import get_giv_id, get_giv_caldate, get_last_giv_id, reset_last_giv_id
 from .CDBManager import get_database
 import time
+from .CStabilisedReader import CStabilizedReader
 
 color_cyan = QColor(51,175,255)
 color_bluepurple = QColor(57,51,255)
@@ -225,7 +229,9 @@ class CDevicesDriver(QtCore.QObject):
         self.send_aoip_range_cmde(cmde, wait_time)
 
 
+
     def check_value(self, val):
+        reader = CStabilizedReader(interval=0.4, stability_duration=1.5, init_duration=1.5)
         measure_on = ''
         flg_new_syntax = False
         set_get = []
@@ -315,10 +321,11 @@ class CDevicesDriver(QtCore.QObject):
                 retry = 3
                 while retry > 0 and len(rx) == 0: # retry until we have a response 
                     retry -= 1
-                    print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
-                    time.sleep(aoip_wait_time)  # Wait for measure stabilisation
-                    rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
-                rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
+                    (rx,eca) = reader.get_stabilized_value(self.scpi_aoip.read_float, aoip_meas_cmd)
+                    #print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
+                    #time.sleep(aoip_wait_time)  # Wait for measure stabilisation
+                    #rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
+                    #rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
 
             #  Output on Aoip mesure on Giv  -------------------
             elif 'giv' in measure_on:

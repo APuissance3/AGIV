@@ -74,12 +74,16 @@ class CCalibrationValues(QObject):
         if '?' in param:  # Only ask for read value
             tx = '{}{}'.format(cmd_adj, param)
             rx = self.devices.scpi_giv4.send_request(tx)
+            if len(rx)<= 0: # Evite plantage 
+                rx = '0.0'
         else:
             strval = '{:.7f}'.format(value)
             tx = '{}{} {};{}{}?'.format(cmd_adj, param, strval, cmd_adj, param)
             rx = self.devices.scpi_giv4.send_request(tx)
             # Write verification 
             txval = float('{:.6f}'.format(value))   # Giv return only 6 digits 
+            if len(rx)<= 0: # Evite plantage 
+                rx = '0.0'
             if txval < (float(rx) -0.000001) or txval > (float(rx)+0.000001):
                 self.message  = "Error: with {}  tx='{}'  -  rx='{}'".format(param, txval, rx)
                 logger.logdata(self.message )
@@ -89,37 +93,60 @@ class CCalibrationValues(QObject):
         return(float(rx))
 
     def exec_calibration(self):
+        if True:
+            self.exec_calibration_2points()
+        else:
+            self.exec_calibration_successive()
+        
+    def exec_calibration_successive():
+        pass
+
+
+    def exec_calibration_2points(self):
+        clear_calib = False  # Verrue pour reset des calibrations
+        dbg_xz = 1.0
+        dbg_xfs = 1.0
+        """ Effectue la calibration en repartant de 0: Init Z=0 ainsi que G=1 si coché """
         logger = get_logger()
         print (f"************** Range:  {self.range_name}  *****************")
         self.check_calibration('Lecture initiale') # Lecture des parametres d'ajustement et des points d'étalonnage
         # Probleme avec le zero: on réinitialise dans tous les cas
-        self.sig_CCalibVal_Message.emit("Init reglage Z", q_green_color, INFO_FONT )
+        self.sig_CCalibVal_Message.emit("Init reglage Z=0.0", q_green_color, INFO_FONT )
         self.cmd_adjust_param('Z', 0)
         self.dev_z = 0.0
+
+        zeroize = get_zeroize_cBox()
+        if zeroize:
+            self.sig_CCalibVal_Message.emit("Init reglage G = 1.0", q_green_color, INFO_FONT )
+            self.cmd_adjust_param('G', 1.0)
+            return
+
 
         # if cBox zg_reset we force the parameters G=1 
         self.zg_reset |= get_overwrite_cBox() 
 
         if self.zg_reset:
-            self.sig_CCalibVal_Message.emit("Init reglage G", q_green_color, INFO_FONT )
+            self.sig_CCalibVal_Message.emit("Init reglage G = 1.0", q_green_color, INFO_FONT )
             self.cmd_adjust_param('G', 1.0)
             self.dev_g = 1.0
             self.sig_CCalibVal_Message.emit("Mesure des nouveaux points 0 et FS", q_green_color, INFO_FONT )
             self.y[0] = self.devices.check_value(self.x[0])  # Control the point x0,y0
             self.y[1] = self.devices.check_value(self.x[1])  # Control the point x1,y1
-        self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
-        self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
-        # Check abnormal value
-        if self.dev_a > 1.2 or self.dev_a < 0.8:
-            self.error = True
-            self.message = 'Find abnormal g value: {}'.format(self.new_g)
-        else:
-            self.new_g = self.dev_g  / self.dev_a
-            self.cmd_adjust_param('G', self.new_g)
-            print (f"Set G= {self.new_g}")
-            logger.logdata(f'Set G= {self.new_g}\n')
+            self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
+            self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
+            # Check abnormal value
+            if self.dev_a > 1.2 or self.dev_a < 0.8:
+                self.error = True
+                self.message = 'Find abnormal g value: {}'.format(self.new_g)
+            else:
+                self.new_g = self.dev_g  / self.dev_a
+                if clear_calib:    ###  DBG Reset calib usine
+                    self.new_g = 1.0 
+                self.cmd_adjust_param('G', self.new_g)
+                print (f"Set G= {self.new_g}")
+                logger.logdata(f'Set G= {self.new_g}\n')
 
-        # Porbleme avec l'ajustage d'offset. Dans tous les cas, on repart avec un Z à 0
+        # Probleme avec l'ajustage d'offset. Dans tous les cas, on repart avec un Z à 0
         #self.cmd_adjust_param('Z', 0.0)
         #self.dev_z = 0.0
 
@@ -128,22 +155,35 @@ class CCalibrationValues(QObject):
         self.y[1] = self.devices.check_value(self.x[1])  # Reload y1 with the new G
         logger.logdata('Nouvelles valeurs avec correction de G:\n')
         logger.logdata('  Y0= {: 9.6f}  Y1= {:> 9.6f}\n'.format(self.y[0], self.y[1]))
+        """
+        Annulé: le zero s'ajuste exclusivement avec le point 0
         # modification du 08/2023: On ajuste le 0 avec la moyenne des deux points et le nouveau gain
         #self.dev_b = -(((self.y[0] - self.x[0]) + (self.y[1] - self.x[1]))/2)  # Test 31/08: Inversion signe de correction
-        self.dev_b = -(self.y[0] - self.x[0])
-
+        """
+        """
         # Petit doute: inversion sens de correction du Z   - self.new_z = self.dev_z - (self.dev_b / self.z_factor)
         #self.new_z = -((self.dev_b / -self.z_factor) - self.dev_z)  # Pour les resistances, le Z n'est pas direct
-        self.new_z = (self.dev_b / self.z_factor) - self.dev_z  # Pour les resistances, le Z n'est pas direct
-        self.cmd_adjust_param('Z', self.new_z)
-        print (f"Set Z= {self.new_z}")
-        logger.logdata(f'Set Z ={self.new_z}')
+        """
+        self.dev_b = -(self.y[0] - self.x[0])
+
+        if self.z_factor != 0.0:  # if z_factor is set to  0.0, don't touch to Z (GIV R03 to R04 can't set it properly)
+            self.new_z = (self.dev_b / self.z_factor) - self.dev_z  # Pour les resistances, le Z n'est pas direct
+            if clear_calib:    ###  DBG Reset calib usine
+                self.new_z = 0.0
+            #self.new_z *= dbg_xz
+            self.cmd_adjust_param('Z', self.new_z)
+            print (f"Set Z= {self.new_z}")
+            logger.logdata(f'Set Z ={self.new_z}')
+        else:
+            self.new_z = 0.0
+            logger.logdata(f'Z not set ')
         self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
         self.check_calibration("Valeurs finales")
 
     def check_calibration(self,msg=''):
+        """ Lecture des reglages Z et G et controle des valeurs aux points de reglage """
         logger = get_logger()
-        self.devices = get_devices_driver() # USed also by the other methods
+        self.devices = get_devices_driver() # Used also by the other methods
         #self.message = None
         logger.log_operation(f'Check range "{self.range_name}" {msg}')
         self.devices.go_config(self.range_name)

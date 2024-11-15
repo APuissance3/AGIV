@@ -100,7 +100,7 @@ def initialise_database( db_name):
     """
     global database
     database = CDBManager(db_name) if "sqlite3" in DB_SYST else \
-               CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.97', port='5432')
+              CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.97', port='5432')
     database.build_database()
     database.populate_database()
     return database
@@ -479,7 +479,7 @@ class CDBManager():
 if __name__ == "__main__":
     #db = CDBManager('AP3reports_rec')
 
-    db = CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.97', port='5432')
+    db = CDBManager('etalonnage','utllafond','ELA.AP3saucats', host='10.41.33.95', port='5432')
     db.connect()
     #db.build_database()
 

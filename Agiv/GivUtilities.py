@@ -42,10 +42,11 @@ def get_giv_caldate(giv_scpi):
     db_date = ''
     if giv_scpi is not None:
         rx = giv_scpi.send_request(cmd)
-        nb_days = int(rx.replace(' ',''))
-        adj_date = REF_DATE + timedelta (days=nb_days)
-        fr_date = adj_date.strftime('%d/%m/%Y')
-        db_date =  adj_date.strftime('%Y-%m-%d')
+        if len(rx) > 0:
+            nb_days = int(rx.replace(' ',''))
+            adj_date = REF_DATE + timedelta (days=nb_days)
+            fr_date = adj_date.strftime('%d/%m/%Y')
+            db_date =  adj_date.strftime('%Y-%m-%d')
     return (fr_date, db_date)
     
 def unlock_giv(giv_scpi):

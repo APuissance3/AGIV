@@ -1,0 +1,115 @@
+---
+Configuration:
+    number: 23
+    myStr: toto
+
+Titre: "BANC DE TEST AGIV "
+
+
+# ------ Relay values --------
+# Corespondance Bits AGIV vs relay              
+#       b8      b7      b6      b5      b4      b3      b2      b1      b0
+#       nc      nc      Rr-     Rr+     Pwr     Rb-     Ra-     Rb+     Ra+           
+# V+ connections:   A=x00,  B=x01,  C=x02,  D=x03
+# V- connections:   A=x00,  B=x04,  C=x08,  D=x0C
+# V- to Pwr: x10
+# R hom +: x20
+# R hom -: x40
+# 
+
+Options:
+    advanced_tab: True   # Enable Adanced tab  panel
+    advanced_box: False   # Enable Adanced cbox  panel
+    reports_directory: 'z:\Agiv_reports'
+
+Devices:
+    scpi_relays: [',AGIV', 'color_cyan', 'avec le banc AGIV', 0.2, 115200]
+    scpi_giv4:   [',GIV4', 'color_red_purple', 'avec le GIV4', 0.2, 115200]
+    scpi_aoip:   [',PJ6301', 'color_bluepurple', 'avec le PJ', 2.0, 9600]
+
+Commands:
+    aoip_rem: '*CLS;REM;*ESR?'
+    aoip_loc: '*CLS;LOC;*ESR?'
+    aoip_mes: 'MEAS?'
+    aoip_out: 'Sour {}'
+    aoip_meas_time: 2.0      # Waiting time between source setting and Aoip measure
+    giv_mes: 'IN:VAL?'
+    giv_out: 'OUT:VAL {};:OUT:VAL?'
+    giv_meas_time: 2.0  # Time to stabilize input value on the giv
+    aoip_range_sel_time: 2.0    # waiting time between range change and the reply of Aoip 
+
+Ranges:
+
+    "Sortie resistance (+) 0.. 450R":
+        active: True
+        calibrate: True
+        english_name: "Resistor simulator (+) 0..450R"
+        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        #set_val: ['Set',CALYS','*CLS; Sour {v};:ERR?','']  # Device where the reference is set, message to set, expected answer
+        set_val: ['Set','GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No error',0.2]        # Device where measure is get, message to get,  expected answer, wait time
+        get_val: ['Get','GIV4','*CLS; :SYST:ERR?','No error', 0.2]          # Device where measure is get, message to get,  expected answer, wait time
+        aoip_meas_time: 4.0 # Resistor is more slow
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: 0.0    # For resistance, don't set Z
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 400.0]
+        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
+        tolerance: [0.01, 0.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
+
+    "Sortie resistance (-) 0.. 450R":
+        active: True
+        calibrate: True
+        english_name: "Resistor simulator (-) 0..450R"
+        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        set_val: ['Set','GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No error',0.2]        # Device where measure is get, message to get,  expected answer, wait time
+        get_val: ['Get','GIV4','*CLS; :SYST:ERR?','No error', 0.2]          # Device where measure is get, message to get,  expected answer, wait time
+        correction: ":OUTput:RES:0400:NEG:ADJ_DAC_"
+        z_factor: 0.0    # For resistance, don't set Z
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 400.0]
+        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
+        tolerance: [0.01, 0.03]  #  0.05% +/- 0.03R
+        full_scale: 450.0
+
+    "Sortie resistance (+) 0.. 4500R":
+        active: True
+        calibrate: True
+        english_name: "Resistor simulator (+) 0..4500R"
+        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
+        giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
+        set_val: ['Set','GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No error',0.2]        # Device where measure is get, message to get,  expected answer, wait time
+        get_val: ['Get','GIV4','*CLS; :SYST:ERR?','No error', 0.2]          # Device where measure is get, message to get,  expected answer, wait time
+        aoip_meas_time: 4.0 # Resistor is more slow
+        correction: ":OUTput:RES:04K:POS:ADJ_DAC_"
+        z_factor: 0.0    # For resistance, don't set Z
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 2500.0]
+        points: [0.0, 1.0, 10.0, 800.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
+        tolerance: [0.025, 0.03]  # Il faut aussi passer 0.05%
+        full_scale: 4500.0
+
+    "Sortie resistance (-) 0.. 4500R":
+        active: True
+        calibrate: True
+        english_name: "Resistor simulator (-) 0..4500R"
+        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
+        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
+        giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
+        set_val: ['Set','GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No error',0.2]        # Device where measure is get, message to get,  expected answer, wait time
+        get_val: ['Get','GIV4','*CLS; :SYST:ERR?','No error', 0.2]          # Device where measure is get, message to get,  expected answer, wait time
+        aoip_meas_time: 4.0 # Resistor is more slow
+        correction: ":OUTput:RES:04K:NEG:ADJ_DAC_"
+        z_factor: 0.0    # For resistance, don't set Z
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [0.0, 2500.0]
+        points: [0.0, 1.0, 10.0, 800.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
+        tolerance: [0.025, 0.03]  #  0.05% +/- 0.03R
+        full_scale: 4500.0

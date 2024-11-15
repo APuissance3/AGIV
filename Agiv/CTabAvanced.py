@@ -48,7 +48,7 @@ class CTabAvanced(QObject):
                 self.pw.cBoxDbgSendCmd.clear()
                 txt = myfile.readline().replace('\n','')
                 while txt:
-                    print ("cmd: '"+ txt + "'")
+                    #print ("cmd: '"+ txt + "'")
                     self.pw.cBoxDbgSendCmd.addItem(txt)
                     txt = myfile.readline().replace('\n','')
         except Exception as ex:

@@ -167,7 +167,7 @@
       <property name="geometry">
        <rect>
         <x>570</x>
-        <y>270</y>
+        <y>230</y>
         <width>171</width>
         <height>21</height>
        </rect>
@@ -189,7 +189,7 @@
       <property name="geometry">
        <rect>
         <x>570</x>
-        <y>300</y>
+        <y>260</y>
         <width>181</width>
         <height>21</height>
        </rect>
@@ -227,7 +227,7 @@
       <property name="geometry">
        <rect>
         <x>570</x>
-        <y>330</y>
+        <y>290</y>
         <width>241</width>
         <height>21</height>
        </rect>
@@ -240,6 +240,25 @@
       </property>
       <property name="checked">
        <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="ZeroiseCalib">
+      <property name="geometry">
+       <rect>
+        <x>570</x>
+        <y>320</y>
+        <width>181</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Si coché, on écrase les calibrations précédentes en imposant un gain= 1 et offset à 0 avant la calibration. méthode plus lente mais plus sure. Si décoché, on ré-ajuste la calibration a partir de celle existante. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="text">
+       <string>Debug: Raz Z=0 et G=1</string>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
       </property>
      </widget>
     </widget>

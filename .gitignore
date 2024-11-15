@@ -2,6 +2,11 @@
 .vscode
 .__pycache__
 Agiv_Bench.egg-info
+*.pyc
 build
 dist
 
+Agiv/__pycache__/CCalibrateTab.cpython-310.pyc
+Agiv/__pycache__/CCalibrateTab.cpython-310.pyc
+*.pyc
+*.pyc

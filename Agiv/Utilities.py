@@ -58,6 +58,7 @@ def play_success():
 
 def play_echec():
     ws.PlaySound("./Agiv/sounds/echec.wav", ws.SND_FILENAME)
+    pass
 
 
 """ Les fonctions ci-dessous permettent l'acces aux windget a partir de la mainWindow """
@@ -75,6 +76,11 @@ def get_main_window():
 """" Utile pour avoir l'etat de la checkbox overwrite au moment des calculs """
 def get_overwrite_cBox():
     flg_overwrite = True if get_main_window().cBoxRazCalib.isChecked() else False
+    return flg_overwrite
+
+"""" Utile pour avoir l'etat de la checkbox overwrite au moment des calculs """
+def get_zeroize_cBox():
+    flg_overwrite = True if get_main_window().ZeroiseCalib.isChecked() else False
     return flg_overwrite
 
 

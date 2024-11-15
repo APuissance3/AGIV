@@ -196,16 +196,17 @@ class CTabMeasures(QThread):
 
         if self.state == CMeasSt.init_range:
             dbg_print("State ====>   init_range")
-            self.cur_range = self.list_ranges_selected[self.cur_range_indx]
-            self.cur_range_indx += 1
-            self.select_a_range(self.cur_range.range_name)
-            strinfo = "Gamme {}.".format(self.cur_range.range_name)
-            self.sig_info_message.emit(strinfo, q_green_color, NORMAL_FONT)
-            self.state = CMeasSt.wait_measures
-            if self.phmi.cBoxMultithread.isChecked():
-                self.start()      # Start the run method in another thread
-            else:
-                self.run()        # For debuging, we could run in the main thread
+            if len(self.list_ranges_selected) > 0:  # pas le peine si rien selectionné
+                self.cur_range = self.list_ranges_selected[self.cur_range_indx]
+                self.cur_range_indx += 1
+                self.select_a_range(self.cur_range.range_name)
+                strinfo = "Gamme {}.".format(self.cur_range.range_name)
+                self.sig_info_message.emit(strinfo, q_green_color, NORMAL_FONT)
+                self.state = CMeasSt.wait_measures
+                if self.phmi.cBoxMultithread.isChecked():
+                    self.start()      # Start the run method in another thread
+                else:
+                    self.run()        # For debuging, we could run in the main thread
             return
 
         if self.state == CMeasSt.wait_measures:
@@ -282,7 +283,7 @@ class CTabMeasures(QThread):
             print("check the a_point {}".format(val_send))
             txt_info = "relevé valeur {}".format(a_point.check_value)
             self.sig_info_message.emit( txt_info, q_green_color, INFO_FONT)
-            nb_try = 3
+            nb_try = 1  # 05/2024: If the result is not good, add waiting time
             while nb_try:
                 val_read = ddriver.check_value(a_point.check_value)
                 (check_ok, min, max) = checker.check_val(val_send, val_read)

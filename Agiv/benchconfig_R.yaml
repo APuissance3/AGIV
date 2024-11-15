@@ -19,17 +19,12 @@ Titre: "BANC DE TEST AGIV "
 
 Options:
     advanced_tab: True   # Enable Adanced tab  panel
-    advanced_box: False   # Enable Adanced cbox  panel
+    advanced_box: True   # Enable Adanced cbox  panel
     reports_directory: 'z:\Agiv_reports'
 
-Devices:
-    scpi_relays: [',AGIV', 'color_cyan', 'avec le banc AGIV', 0.1, 115200]
-    scpi_giv4:   [',GIV4', 'color_red_purple', 'avec le GIV4', 0.1, 115200]
-    scpi_aoip:   [',PJ6301', 'color_bluepurple', 'avec le PJ', 2.0, 9600]
-    #nonedevice: ['scpi_aoip',',CALYS', 'color_bluepurple', 'avec le CALYS', 2.0, 115200]
 
 Commands:
-    aoip_mes: 'MEAS2?'
+    aoip_mes: 'MEAS?'
     aoip_out: 'Sour {}'
     aoip_meas_time: 2.0      # Waiting time between source setting and Aoip measure
     giv_mes: 'IN:VAL?'
@@ -40,26 +35,6 @@ Commands:
 Ranges:
     "Choisisez la gamme":
         active: False
-
-    "Resistance 400 @ 100uA":
-        active: True
-        calibrate: True
-        calibration_points: [0.0, 400.0]
-        english_name: "Resistor @100uA"
-        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
-        aoip: ":sour:func curr"  #Current out for Calys output
-        aoip: ":SENSE1:FUNC VOLT;VOLT:RANGE 100mV"  # Read voltage for input
-        aoip_out: 'Sour:current {}mA'      # More priority than general command
-        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
-        set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','CALYS',':MEAS1?', '',4]          # Device where measure is get, message to get,  expected answer, wait time
-        read_multiplicator: 0.1
-        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
-        z_factor: -486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
-        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
-        tolerance: [0.01, 0.03]  # Il faut aussi passer 0.05%
-        full_scale: 450.0
-
 
     "Allume la Led":
         active: False
@@ -72,156 +47,153 @@ Ranges:
         points: [0.0]
         tolerance: [0.1, 0.1]
 
-    "Sortie courant 0-20 mA":
-        active: True
-        calibrate: True  
-        english_name: "Output current 0-20mA with internal power"
-        relays: [0x04]  # V+:A, V-:B
-        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA;SUPPLY OFF"
-        giv4: ":MODE OUTPUT_CURRENT_020MA"
-        measure_on: aoip    # The giv is on output mode, the measure is on AOIP
-        correction: ":OUT:CUR:ADJ_DAC_"
-        z_factor: -1.0    
-        calibration_points: [0.1, 23.5]
-        points: [0.1, 4.0, 8.0, 12.0, 16.0, 20.0, 23.5]
-        tolerance: [0.01, 0.001]  # 0.05% +/-0.0
-        full_scale: 20.0
-
-    "Sortie courant 0-20 mA passive":
-        active: True
-        calibrate: False  
-        english_name: "Output current 0-20mA with external power"
-        relays: [0x03, 0x04, 0x10]     # V+:D, V-:B, Pwr
-        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 0MA;SUPPLY ON" # SUPPLY ON accepted only for 0mA and 4mA range
-        aoip2: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA"      # We could go to 25mA range with the suply keep to on after 0mA range
-        giv4: ":MODE OUTPUT_CURRENT_020MA"
-        measure_on: aoip    # The giv is on output mode, the measure is on AOIP
-        points: [0.1, 4.0, 8.0, 12.0, 16.0, 20.0, 23.5]
-        tolerance: [0.01, 0.001]  # 0.05% +/-0.0
-        full_scale: 20.0
-
-    "Sortie courant 4-20 mA passive":
-        active: True
-        calibrate: False    # Calibré avec l'echelle 0..20mA
-        english_name: "Output current 4-20mA with external power"
-        relays: [0x03, 0x04, 0x10]     # V+:D, V-:B, Pwr
-        aoip: "SENSE2:FUNC CURRENT;CURRENT:RANGE 0MA;SUPPLY ON"
-        aoip2: "SENSE2:FUNC CURRENT;CURRENT:RANGE 25MA"      # We could go to 25mA range with the suply keep to on after 0mA range
-        giv4: ":MODE OUTPUT_CURRENT_420MA"
-        measure_on: aoip 
-        points: [0.1, 4.0, 8.0, 12.0, 16.0, 20.0, 23.5]
-        tolerance: [0.01, 0.001]  # 0.05% +/-0.0
-        full_scale: 20.0
-
-
-    "Sortie tension 0..100mV":
-        active: True
-        calibrate: True
-        english_name: "Output 0-100mV"
-        relays: [0x02, 0x0C]     # V+:C, V-:D
-        aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 100mV"
-        giv4: ":MODE OUTPUT_VOLTAGE_0100MV"
-        aoip_meas_time: 4
-        measure_on: aoip
-        z_factor: -1.0    
-        correction: ":OUTput:VOLTage:0100MV:ADJ_DAC_"
-        calibration_points: [0.0, 115.0]  # Normalement -10.00,115.0
-        points: [-24.0, 0.0, 10.0, 40.0, 100.0, 115.0]
-        tolerance: [0.01, 0.001]  # 0.05% +/-1µV
-        full_scale: 180.0
-
-
-
-    "Sortie thermocouple K avec compensation intene":
+    "Pilotage CALYS en courant Pwr externe":  # Le CALYS ne sait pas coupper la source pour ce cas
         active: True
         calibrate: False
-        english_name: "Output TC Type K, Comp INT"
-        relays: [0x02, 0x0C]     # V+:C, V-:D
-        aoip: "SENSE2:FUNC TCOUPLE;:SENSE2:TC:TYPE K"
-        aoip2: "SENSE2:TC:DISP CEL;:SENSE2:TC:RJUN:TYPE INT"
-        # giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
-        giv4: ":MODE OUTPUT_TCK;:OUTPUT:SENSOR:TC:COMP:TYPE INT;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
-        measure_on: aoip 
-        correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux du generateur 0..100mV. Ici on controle juste la cohérence des 2 compensations
-        calibration_points: [0, 0]
-        points: [0.0]
-        tolerance: [0.05, 2.0]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
-        full_scale: 1500.0
+        calibration_points: [0.0, 20.0]
+        english_name: "Measure external power"
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
+        aoip: ":sour:func curr"   
+        #aoip_out: 'Sour:current {}mA'      # More priority than general command
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        #set_val: ['Set',CALYS','*CLS; Sour:current {v} mA;:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
+        #get_val: ['Get','CALYS',':MEAS1?', '',3]          # Device where measure is get, message to get,  expected answer, wait time
+        dialog: [
+            ['Set',CALYS','*CLS; Sour:current {v} mA;:SYST:ERR?','No Error'],
+            ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS; :SENS:STAT:AVER?;:SYST:ERR?', 'No Error',8] 
+        ]
+        correction: ":INput:CURrent:ADJ_ADC_"
+        z_factor: 1.0    # 
+        calibration_points: [0.0, 22.0]
+        points: [0.1, 0.2, 0.3, 0.4, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2.0, 2.5, 3.0, 4.0]
+        tolerance: [0.1, 0.001]  # 0.05% +/-1µA
+        full_scale: 20.0
 
-    "Sortie thermocouple K sans compensation":
-        active: True
-        calibrate: False
-        english_name: "Output TC Type K, Comp off"
-        relays: [0x02, 0x0C]     # V+:C, V-:D
-        aoip: "SENSE2:FUNC TCOUPLE;:SENSE2:TC:TYPE K"
-        aoip2: "SENSE2:TC:DISP CEL;:SENSE2:TC:RJUN:TYPE DIS"
-        # giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
-        giv4: ":MODE OUTPUT_TCK;:OUTPUT:SENSOR:TC:COMP:TYPE OFF;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
-        measure_on: aoip 
-        correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux du generateur 0..100mV. Ici on controle juste la cohérence des 2 compensations
-        calibration_points: [0, 0]
-        points: [-200.0, 0.0, 800, 1000.0, 1300]
-        tolerance: [0.05, 2.0]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
-        full_scale: 1500.0
-
-
-    "Sortie tension 0..10V":
+    "Resistance 450 @ 100uA":
         active: True
         calibrate: True
-        english_name: "Output 0..10V"
-        relays: [0x02, 0x0C]     # V+:C, V-:D
-        aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 50V"
-        giv4: ":MODE OUTPUT_VOLTAGE_010V"
-        measure_on: aoip 
-        correction: ":OUTput:VOLTage:010V:ADJ_DAC_"
-        z_factor: -1.0    # Inverse sens de correction du 0 pour cette game
-        calibration_points: [0.1, 15.0]
-        points: [0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 15.0]
-        tolerance: [0.01, 0.1]  # 0.05% +/-1mV
-        full_scale: 10.0
+        calibration_points: [0.0, 450.0]
+        english_name: "Resistor @100uA"
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
+        read_multiplicator: 10.0   # 2000: V/0.5mA  , 10: mV/0.1mA, 5000:  V/0.2mA
+        aoip: ":sour:func curr;:sour:CURR:range 0mA;:sour:curr:supply ON;:sour 0.1"  #Current out for Calys output
+        aoip2: ":SENS:FUNC VOLT;:SENS:VOLT:RANGE 100mV"  # Read voltage for input
+        #☺aoip_out: 'Sour:current 0.1'      # More priority than general command
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        dialog: [
+            ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error'],
+            ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS; :SENS:STAT:AVER?;:SYST:ERR?', 'No Error',8] 
+        ]
+        #set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
+        #send_op: ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error']
+        #get_val: ['Get','CALYS','SENS:STAT:AVR?', '',8]          # Device where measure is get, message to get,  expected answer, wait time
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -486.0  #-486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
+        points: [0.0, 1.0, 15.0, 100.0, 240.0, 400.0, 450.0]
+        tolerance: [0.03, 5.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
 
-    "Relecture tension interne":
+    "Resistance 450 @ 250uA":
         active: True
         calibrate: True
-        english_name: "Output feedback 0..10V"
-        relays: [0x02, 0x0C]     # V+:C, V-:D
-        aoip: ":SENSE2:FUNC VOLT;VOLT:RANGE 50V"
-        giv4: ":MODE OUTPUT_VOLTAGE_010V"
-        # Check new check values mode with set_val and get_val datas
-        set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','GIV4',':IN:VAL?', '',2]          # Device where measure is get, message to get,  expected answer, stabilisation time
-        correction: ":INput:VOLTage:INT:ADJ_ADC_"
-        z_factor: 1.0    
-        calibration_points: [0.1, 10.0]
-        points: [0.0, 0.1, 5.0, 10.0]
-        tolerance: [0.01, 0.1]  # 0.05% +/-1mV
-        full_scale: 10.0
+        calibration_points: [15.0, 400.0]
+        english_name: "Resistor @250uA"
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
+        read_multiplicator: 4000.0   # 2000: V/0.5mA  , 10: mV/0.1mA, 5000:  V/0.2mA
+        aoip: ":sour:func curr;:sour:CURR:range 0mA;:sour:curr:supply ON;:sour 0.25"  #Current out for Calys output
+        aoip2: ":SENS:FUNC VOLT;:SENS:VOLT:RANGE 1V"  # Read voltage for input
+        #☺aoip_out: 'Sour:current 0.1'      # More priority than general command
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        dialog: [
+            ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error'],
+            ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS; :SENS:STAT:AVER?;:SYST:ERR?', 'No Error',8] 
+        ]
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -486.0  #-486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
+        points: [0.0, 1.0,  15.0, 100.0, 240.0, 400.0, 450.0]
+        tolerance: [0.03, 5.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
 
-    "Mesure de tension 0..30V":
+
+    "Resistance 450 @ 400uA":
         active: True
         calibrate: True
-        english_name: "Voltage measure 0-30V"
-        relays: [0x0, 0x0C]     # V+:A, V-:D
-        measure_on: giv 
-        aoip: ":sour:volt:range 50V;:sour:volt 1"
-        giv4: ":MODE INPUT_VOLTAGE_030V"
-        # Check new check values mode with set_val and get_val datas
-        set_val: ['Set',CALYS','*CLS; Sour {v};:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','GIV4',':IN:VAL?', '',4]          # Device where measure is get, message to get,  expected answer, wait time
-        correction: ":INput:VOLTage:EXT:ADJ_ADC_"
-        z_factor: 1.0    
-        calibration_points: [0.1, 30.0]
-        points: [0.0, 0.1, 1.0, 10.0, 20.0, 30.0]
-        tolerance: [0.01, 0.01]  # 0.1%, +/-10mV
-        full_scale: 30.0
+        calibration_points: [0.0, 450.0]
+        english_name: "Resistor @400uA"
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
+        read_multiplicator: 2500.0   # 2000: V/0.5mA  , 10: mV/0.1mA, 5000:  V/0.2mA
+        aoip: ":sour:func curr;:sour:CURR:range 0mA;:sour:curr:supply ON;:sour 0.4"  #Current out for Calys output
+        aoip2: ":SENS:FUNC VOLT;:SENS:VOLT:RANGE 1V"  # Read voltage for input
+        #☺aoip_out: 'Sour:current 0.1'      # More priority than general command
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        dialog: [
+            ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error'],
+            ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS; :SENS:STAT:AVER?;:SYST:ERR?', 'No Error',8] 
+        ]
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -486.0  #-486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
+        points: [0.0, 1.0, 15.0, 100.0, 240.0, 400.0, 450.0]
+        tolerance: [0.03, 5.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
+
+    "Resistance 450 @ 2mA":
+        active: True
+        calibrate: True
+        calibration_points: [0.0, 450.0]
+        english_name: "Resistor @2mA"
+        relays: [0x03,0x04,0x10] #  V+:D  V-:B  Pwr
+        read_multiplicator: 500.0   # 2000: V/0.5mA  , 10: mV/0.1mA, 5000:  V/0.2mA
+        aoip: ":sour:func curr;:sour:CURR:range 0mA;:sour:curr:supply ON;:sour 2;"  #Current out for Calys output
+        aoip2: ":SENS:FUNC VOLT;:SENS:VOLT:RANGE 1V"  # Read voltage for input
+        #☺aoip_out: 'Sour:current 0.1'      # More priority than general command
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        dialog: [
+            ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error'],
+            ['Send','CALYS','*CLS;:SENS:STAT:INIT;:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS; :SENS:STAT:AVER?;:SYST:ERR?', 'No Error',8] 
+        ]
+        #set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
+        #get_val: ['Get','CALYS',':MEAS?', '',4]          # Device where measure is get, message to get,  expected answer, wait time
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -486.0  #-486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
+#        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
+        points: [0.0, 1.0, 15.0, 100.0, 240.0, 400.0, 450.0]
+        tolerance: [0.03, 5.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
+
+    "Sortie resistance PJ (+) 0.. 450R":
+        active: True
+        calibrate: True
+        english_name: "Resistor simulator PJ (+) 0..450R"
+        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        aoip: "RANGE_IN OHM600:WIRE4"
+        #aoip2: ":SENSE:FUNC RES;RES:WIR WIRES_4"
+        giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
+        dialog: [
+            ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error'],
+            ['Get','CALYS','*CLS;MEAS?', '',6] 
+        ]
+        correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
+        z_factor: -486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
+        z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
+        calibration_points: [60.0, 200.0]
+        points: [0.0, 1.0, 15.0, 60.0, 100.0, 200.0, 360.0, 450.0]
+#        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
+        tolerance: [0.05, 0.03]  # Il faut aussi passer 0.05%
+        full_scale: 450.0
+
 
     "Sortie resistance (+) 0.. 450R":
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..450R"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
-        aoip: ":SENSE2:FUNC RES;RES:RANGE 400OHM"
-        aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
+        aoip: "SENSE:FUNC RES;RES:RANGE 400OHM"
+        aoip2: ":SENSE:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
         aoip_meas_time: 4.0 # Resistor is more slow
@@ -229,8 +201,9 @@ Ranges:
         z_factor: -486.0    # For resistance, 1.0 offset is compensed with 1/ (496.0 - 10)
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
         calibration_points: [0.0, 400.0]
-        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
-        tolerance: [0.01, 0.03]  # Il faut aussi passer 0.05%
+        points: [0.0, 1.0, 15.0, 100.0, 240.0, 400.0, 450.0]
+#        points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
+        tolerance: [0.05, 0.03]  # Il faut aussi passer 0.05%
         full_scale: 450.0
 
     "Sortie resistance (-) 0.. 450R":
@@ -264,8 +237,8 @@ Ranges:
         correction: ":OUTput:RES:04K:POS:ADJ_DAC_"
         z_factor: -4906.0    # For resistance, 1.0 offset is compensed with 1/(4916-10)
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
-        calibration_points: [0.0, 2500.0]
-        points: [0.0, 1.0, 10.0, 800.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
+        calibration_points: [600.0, 2000.0]  #[0.0, 2500.0] [0.0, 3600] => 600R= -100, 2000R= 260°C
+        points: [0.0, 1.0, 10.0, 600.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
         tolerance: [0.025, 0.03]  # Il faut aussi passer 0.05%
         full_scale: 4500.0
 
