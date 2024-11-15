@@ -112,6 +112,7 @@ class MainWindow(QtWidgets.QMainWindow,
             self.cBoxWriteCal.setEnabled(False)
             self.cBoxRazCalib.setEnabled(False)
             self.cBoxRazCalib.setChecked(True)
+            self.ZeroiseCalib.hide()
 
     def force_unlock_giv(self):
         self.Qmessages_print("Déverrouillage du GIV par l'utilisateur", q_orange_color)
