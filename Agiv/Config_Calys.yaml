@@ -44,12 +44,14 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..4500R"
+        checkstability: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        relay_3w: [0x20, 0.5]   # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        aoip_meas_time: 6.0 # Resistor is more slow
+        aoip_meas_time: 1.0 # Waiting by user now 
         correction: ":OUTput:RES:04K:POS:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
@@ -62,12 +64,14 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (-) 0..4500R"
+        checkstability: False
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relay_3w: [0x40]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        aoip_meas_time: 6.0 # Resistor is more slow
+        aoip_meas_time: 1.0 # Waiting by user now 
         correction: ":OUTput:RES:04K:NEG:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation

@@ -40,6 +40,8 @@ class CCalibrationValues(QObject):
         self.range_data = range_data
         self.parent = parent
         self.x = range_data['calibration_points']  #  x coordonates of the calibration points
+        if 'checkstability' in range_data:
+            self.check_stability = range_data['checkstability'] # If true, ask for user to check the stability on AC voltmeter
         self.y = [None] * 2     #  y coordonates readed values for x inputs
         self.res = [None] * 2   #  True if the y measure is in tolerance range
         self.dev_b = 0.0        #  calculated offset of the device near 0 point
@@ -92,14 +94,76 @@ class CCalibrationValues(QObject):
                 #                        .format(param))
         return(float(rx))
 
-    def exec_calibration(self):
-        if True:
-            self.exec_calibration_2points()
-        else:
-            self.exec_calibration_successive()
+    """ Pose pour debrancher le fil 3W pendant un certain temps pour assurer la stabilité du couple Calys / Giv """
+    def manualcheck_stability(self):
+        ok = False
+        while not ok:
+            ok = msg_dialog_confirm("Débrancher et rebrancher la douille 3W\n"
+                            "Mesurer la tension AC sur les bornes COM/V+.\n"
+                            "Si elle est à 0, et que la mesure est stable,\n"
+                            "débrancher le voltmètre puis faire ok\n",
+                            "Vérification stabilité")
+
         
-    def exec_calibration_successive():
-        pass
+
+    """ Version avec verif manuelle de stabilité fait moins de controle pour éviter trop de perte de temps """
+    def exec_calibration_2points_manualcheck(self):
+        """ Effectue la calibration en repartant de 0: Init Z=0 ainsi que G=1 si coché """
+        logger = get_logger()
+        checker = CCheckRangePoint(self.range_data) # Checker object
+        print (f"************** Range:  {self.range_name}  *****************")
+        # supprimé en manual check  - 
+        # self.check_calibration('Lecture initiale') # Lecture des parametres d'ajustement et des points d'étalonnage
+        # 4 lignes dessous Fait dans self.check_calibration() en temps normal 
+        self.devices = get_devices_driver() 
+        logger.log_operation(f'Check range "{self.range_name}"')
+        self.devices.go_config(self.range_name)
+        self.parent.sig_register_range.emit(self.range_name)
+
+        # On réinitialise Z à 0 dans tous les cas
+        self.sig_CCalibVal_Message.emit("Init reglage Z=0.0", q_green_color, INFO_FONT )
+        self.cmd_adjust_param('Z', 0)
+        self.dev_z = 0.0
+        self.sig_CCalibVal_Message.emit("Init reglage G = 1.0", q_green_color, INFO_FONT )
+        self.cmd_adjust_param('G', 1.0)
+        self.dev_g = 1.0
+        self.sig_CCalibVal_Message.emit("Mesure des nouveaux points 0 et FS", q_green_color, INFO_FONT )
+        self.manualcheck_stability()
+        self.y[0] = self.devices.check_value(self.x[0])  # Control the point x0,y0
+        self.manualcheck_stability()
+        self.y[1] = self.devices.check_value(self.x[1])  # Control the point x1,y1
+        self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
+        self.sig_CCalibVal_Message.emit("Ajustage reglage G ", q_green_color, INFO_FONT )
+        self.new_z =0.0
+        # Check abnormal value
+        if self.dev_a > 1.2 or self.dev_a < 0.8:
+            self.error = True
+            self.message = 'Find abnormal g value: {}'.format(self.new_g)
+        else:
+            self.new_g = self.dev_g  / self.dev_a
+            self.cmd_adjust_param('G', self.new_g)
+            print (f"Set G= {self.new_g}")
+            logger.logdata(f'Set G= {self.new_g}\n')
+            logger.logdata(f'Keep Z= 0.0\n')
+        # Le gain est rectifié, on lit le zéro avec ce nouveau gain
+        self.manualcheck_stability()
+        self.y[0] = self.devices.check_value(self.x[0])  # Reload y0 with the new G
+        (self.res[0], min, max) = checker.check_val( self.x[0] , self.y[0]) # result for Z
+        self.manualcheck_stability()
+        self.y[1] = self.devices.check_value(self.x[1])  # Reload y1 with the new G
+        (self.res[1], min, max) = checker.check_val( self.x[1] , self.y[1]) # result for FS
+        logger.logdata('Nouvelles valeurs avec correction de G:\n')
+        logger.logdata('  Y0= {: 9.6f}  Y1= {:> 9.6f}\n'.format(self.y[0], self.y[1]))
+        self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
+        # supprimé en manual check  - 
+        # self.check_calibration("Valeurs finales")
+
+
+    def exec_calibration(self):
+        if self.check_stability:
+            self.exec_calibration_2points_manualcheck()
+        else: 
+            self.exec_calibration_2points()
 
 
     def exec_calibration_2points(self):

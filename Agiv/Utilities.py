@@ -54,9 +54,11 @@ def get_Agiv_dir(cfg_options=None):
     return agiv_dir
 
 def play_success():
+    return
     ws.PlaySound("./Agiv/sounds/success.wav", ws.SND_FILENAME)
 
 def play_echec():
+    return
     ws.PlaySound("./Agiv/sounds/echec.wav", ws.SND_FILENAME)
     pass
 

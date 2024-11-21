@@ -114,6 +114,10 @@ class MainWindow(QtWidgets.QMainWindow,
             self.cBoxRazCalib.setChecked(True)
             self.ZeroiseCalib.hide()
 
+        self.cBoxMultithread.setChecked(False)  # Force monotache (le mutithread ne fonctionne pas avec les nouvelles modifications)
+
+
+
     def force_unlock_giv(self):
         self.Qmessages_print("Déverrouillage du GIV par l'utilisateur", q_orange_color)
         d_drv= get_devices_driver()
@@ -149,7 +153,7 @@ def msg_dialog_unlock():
     ret = msg.exec_()
     return (ret == QMessageBox.Yes)
 
-bench_version = "A Puissance 3 - AGIV V3.0 ELA 10/2024"
+bench_version = "A Puissance 3 - AGIV V3.1 ELA 11/2024"
 
 def print_start_options():
     print(f"AGIV_BENCH version: {bench_version}")
