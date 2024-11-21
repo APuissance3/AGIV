@@ -10,7 +10,7 @@
             "type": "python",
             "request": "launch",
             "module": "Agiv",
-            "args":["-cfg=config_PJ.yaml", "-adv"],
+            "args":["-cfg=config_Calys.yaml", "-adv"],
             "justMyCode": true
         },
         {

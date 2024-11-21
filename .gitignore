@@ -6,7 +6,7 @@ Agiv_Bench.egg-info
 build
 dist
 
-Agiv/__pycache__/CCalibrateTab.cpython-310.pyc
-Agiv/__pycache__/CCalibrateTab.cpython-310.pyc
+Agiv/__pycache__/*
+Agiv/__pycache__
 *.pyc
 *.pyc
