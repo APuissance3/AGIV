@@ -42,6 +42,15 @@ def msg_dialog_confirm(strmessage, title):
     ret = msg.exec_()
     return (ret == QMessageBox.Yes)
 
+def msg_dialog_info(strmessage, title):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Information)
+    msg.setText(strmessage)
+    msg.setWindowTitle(title)
+    msg.setStandardButtons(QMessageBox.Ok)
+    ret = msg.exec_()
+
+
 """ Retourne le chemin Agiv dans le home (soit %userprofile%/Agiv sous Windows) 
     ou  celui indiqué dans la liste option
 """
@@ -54,9 +63,11 @@ def get_Agiv_dir(cfg_options=None):
     return agiv_dir
 
 def play_success():
+    return
     ws.PlaySound("./Agiv/sounds/success.wav", ws.SND_FILENAME)
 
 def play_echec():
+    return
     ws.PlaySound("./Agiv/sounds/echec.wav", ws.SND_FILENAME)
     pass
 

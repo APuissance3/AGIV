@@ -48,6 +48,8 @@ class CTabMeasures(QThread):
         self.list_ranges_selected = list()
         self.running = False    
         self.phmi = _parent
+        self.check_stability = False
+
         # Attributes to drive the state machine
         self.timer = QTimer()
         self.state = CMeasSt.wait   # Wait for Start button
@@ -56,14 +58,18 @@ class CTabMeasures(QThread):
         self.cur_range = None
         self.timer_divider = 0
 
-        # Read our ranges data and fill ranges comboBox       
-        self.cfg_ranges = get_config_ranges()
+        # Read our ranges data and fill ranges comboBox
+        list_all_ranges =[]      
+        self.cfg_ranges = get_config_ranges()  
         for range, range_data in self.cfg_ranges.items():
             # Check for 'active' key if exist
             if 'active' in range_data and range_data['active']:
-                meas_range_view = CRangeStatusLayout(range, range_data, self.phmi)    # Create the object
-                self.vRangesLayout.addLayout(meas_range_view.hLayout)
-                self.list_ranges.append(meas_range_view)
+                list_all_ranges.append(range)
+        list_all_ranges.reverse()   # ELA11/2024: Permit to finish with R4500 dialogbox
+        for range in list_all_ranges:
+            meas_range_view = CRangeStatusLayout(range, range_data, self.phmi)    # Create the object
+            self.vRangesLayout.addLayout(meas_range_view.hLayout)
+            self.list_ranges.append(meas_range_view)
         self.select_all_range()
         self.phmi.pBtSMeasSelectAll.clicked.connect(self.select_all_range)
         self.phmi.pBtMeasUnselectAll.clicked.connect(self.unselec_all_range)
@@ -244,10 +250,18 @@ class CTabMeasures(QThread):
         load and display the measure points to check  """
         
         self.cfg_selected = self.cfg_ranges[selected_range]  # Shortcut to the data
+        # If true, ask for user to check the stability on AC voltmeter
+        self.check_stability = self.cfg_selected['checkstability'] if 'checkstability' in self.cfg_selected else False 
         # Erase the previous selected measures
         self.list_measures.clear()  
         # Delete previous measure point widgets
         clearLayout(self.vMeasureLayout)
+        QApplication.processEvents()  # ELA 25/11/2024 Si monotache, ça dépanne
+        self.vMeasureLayout.update()
+        #self.vMeasureLayout.repaint()
+        QApplication.processEvents()  # ELA 25/11/2024 Si monotache, ça dépanne
+
+
 
         if self.cfg_selected['active'] == True:   # Only if the range selected is enabled
             # Create a list of all point and a layout with there values
@@ -267,6 +281,8 @@ class CTabMeasures(QThread):
             a_point.check = None
             a_point.update_indicator_color()
 
+    """ Normaly run in another thread, but could be in main thread in debug 
+    in this case, the HMI is not correctly refreshed """  
     def check_point_list(self, range_name):
         """ Check the list of points for one range """
         range_status = True
@@ -285,7 +301,7 @@ class CTabMeasures(QThread):
             self.sig_info_message.emit( txt_info, q_green_color, INFO_FONT)
             nb_try = 1  # 05/2024: If the result is not good, add waiting time
             while nb_try:
-                val_read = ddriver.check_value(a_point.check_value)
+                val_read = ddriver.check_value(a_point.check_value, self.check_stability)
                 (check_ok, min, max) = checker.check_val(val_send, val_read)
                 a_point.check = check_ok
                 a_point.read_value = val_read   # Normaly force the calling of 
@@ -299,6 +315,7 @@ class CTabMeasures(QThread):
             self.sig_register_value.emit(val_send, val_read, not a_point.check) # Register ref, val, and Ko/Ok
             if a_point.check == False:
                 range_status = False
+            QApplication.processEvents()  # ELA 25/11/2024 Si monotache, ça dépanne
         return range_status
 
 

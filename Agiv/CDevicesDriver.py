@@ -7,6 +7,7 @@ as a global variable
 """
 
 from PySide2 import QtCore
+from PySide2.QtCore import QTimer
 from PySide2.QtGui import QColor
 from .CSerialScpiConnexion import *
 import re
@@ -192,7 +193,7 @@ class CDevicesDriver(QtCore.QObject):
         if not "*CLS;" in cmde:     # if report not asked, add it to support old protocol
             tx ="*CLS;"+ cmde + ";:ERR?"
         rx = self.scpi_aoip.send_request(tx, wait_time)
-        if rx[0] != '0':
+        if len(rx)>0 and rx[0] != '0':
             raise ConnectionError("Echec de la commande AOIP\n'{}'".format(cmde))
 
 
@@ -225,7 +226,17 @@ class CDevicesDriver(QtCore.QObject):
         self.send_aoip_range_cmde(cmde, wait_time)
 
 
-    def check_value(self, val):
+    """ Pose pour debrancher le fil 3W pendant un certain temps pour assurer la stabilité du couple Calys / Giv """
+    def manualcheck_stability(self):
+        ok = False
+        while not ok:
+            self.set_bench_relay_3W_disconect()
+            ok = msg_dialog_confirm( "Est ce que la tension AC sur les bornes COM/V+\n"
+                            "est inférieure à 5 mV ?  (YES /NO)\n",
+                            "Vérification stabilité")
+
+
+    def check_value(self, val, flg_man_stab=False):
         measure_on = ''
         flg_new_syntax = False
         set_get = []
@@ -292,6 +303,7 @@ class CDevicesDriver(QtCore.QObject):
                         continue   # No check for response if simulated
                     while retry_ack>0 and len(rx)==0 and scpidev!=None:  # Don't try if the connection is none
                         time.sleep(wait_time)  # Wait for measure stabilisation
+                        #QTimer.singleShot(wait_time)
                         print(f"Wait {wait_time:03.1f}s for stabilisation")
                         rx = scpidev.send_request(sendmsg, 0.5) # 0.5s time-out for response
                         retry_ack -= 1
@@ -315,16 +327,20 @@ class CDevicesDriver(QtCore.QObject):
                 retry = 3
                 while retry > 0 and len(rx) == 0: # retry until we have a response 
                     retry -= 1
+                    if flg_man_stab:
+                        self.manualcheck_stability()
                     print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
                     time.sleep(aoip_wait_time)  # Wait for measure stabilisation
+                    #QTimer.singleShot(aoip_wait_time, None)
                     rx = self.scpi_aoip.send_request(aoip_meas_cmd) # Get measure
                 rx = rx.split(',')[0]   # Keep first element of the AOIP response (eg: '9.999, mA')
 
             #  Output on Aoip mesure on Giv  -------------------
             elif 'giv' in measure_on:
                 self.send_aoip_cmde(aoip_out_cmd.format(val)) 
-                print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
+                print("Wait {:03.1f}s for stabilisation".format(giv_wait_time) )
                 time.sleep(giv_wait_time)
+                #QTimer.singleShot(giv_wait_time)
                 if self.scpi_giv4:
                     rx = self.scpi_giv4.send_request(giv_meas_cmd)
                 if self.flg_simulate:
@@ -350,15 +366,29 @@ class CDevicesDriver(QtCore.QObject):
             self.scpi_relays.send_request(":REL 10;REL?")
         self.scpi_relays.send_request(":REL 0;REL?")
             
+    """ Do not use, PB avec le timer et les thread """
+    def set_bench_relay_3W_disconect(self):
+        self.wait = True
+        (relay_3w, time_3w) = self.range_data['relay_3w']
+        rx = self.scpi_relays.send_request(":REL?")
+        if len(rx)>0:
+            val = int (rx) ^ int(relay_3w)
+            self.set_bench_relays(val)  # Open 3W circuit
+            time.sleep(time_3w)         # wait time
+            self.set_bench_relays()     #restore 3W circuit
 
-    def set_bench_relays(self):
+
+    def set_bench_relays(self, value = None ):
         if self.flg_simulate:
             return
-        relay_cmd = 0   # Binary code send to the bench
-        relay_cfg = self.range_data['relays']   # The string with hex code to add
-        for rly in relay_cfg:
-            relay_cmd += rly
-        rx = self.scpi_relays.send_request(":REL {};REL?".format(relay_cmd))
+        if value:
+            relay_cmd = value
+        else:
+            relay_cmd = 0   # Binary code send to the bench
+            relay_cfg = self.range_data['relays']   # The string with hex code to add
+            for rly in relay_cfg:
+                relay_cmd += rly
+        rx = self.scpi_relays.send_request(f":REL {relay_cmd};REL?")
         if len(rx)<=0 or int(rx) != relay_cmd:
             raise ConnectionError("Echec de la Commande des relais.")
 

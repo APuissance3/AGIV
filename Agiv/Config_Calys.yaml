@@ -4,6 +4,9 @@ Configuration:
     myStr: toto
 
 Titre: "Configuration Calys sans R 450 Ohms"
+# Evolution du 19/11/2024: Adaptation tolérance R4500 et PT1000 à la fiche produit Rev. C
+# (CR Réunion du 18/11/2024)
+
 
 
 # ------ Relay values --------
@@ -44,36 +47,40 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..4500R"
+        checkstability: True
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        relay_3w: [0x20, 1.5]   # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        aoip_meas_time: 6.0 # Resistor is more slow
+        aoip_meas_time: 1.0 # Waiting by user now 
         correction: ":OUTput:RES:04K:POS:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
         calibration_points: [0.0, 3500.0]
         points: [0.0, 1.0, 10.0, 800.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
-        tolerance: [0.025, 0.03]  # Il faut aussi passer 0.05%
+        tolerance: [0.0, 1.20]  # +/-1.2 Ohms Adapté à la fiche produit Rev C
         full_scale: 4500.0
 
     "Sortie resistance (-) 0.. 4500R":
         active: True
         calibrate: True
         english_name: "Resistor simulator (-) 0..4500R"
+        checkstability: True
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relay_3w: [0x20,  1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
         measure_on: aoip 
-        aoip_meas_time: 6.0 # Resistor is more slow
+        aoip_meas_time: 1.0 # Waiting by user now 
         correction: ":OUTput:RES:04K:NEG:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
         calibration_points: [0.0, 3500.0]
         points: [0.0, 1.0, 10.0, 800.0, 1000.0, 1600.0, 2400.0, 3200.0, 3600.0]
-        tolerance: [0.025, 0.03]  #  0.05% +/- 0.03R
+        tolerance: [0.0, 1.20]  # +/-1.2 Ohms Adapté à la fiche produit Rev C
         full_scale: 4500.0
 
 
@@ -83,6 +90,8 @@ Ranges:
         calibrate: False
         english_name: "Output Pt1000 (+)"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        checkstability: True
+        relay_3w: [0x20, 1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: "*CLS;SENSE2:FUNC RTD;RTD:TYPE PT1000;:SYST:ERR?"
         aoip2: "*CLS;SENSE2:FUNC RTD;RTD:WIRES WIRES_4;:SYST:ERR?"
         # giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
@@ -92,7 +101,7 @@ Ranges:
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]
-        tolerance: [0.0, 0.3]  # Sur cette game on cherche juste +/- 0.15 °C
+        tolerance: [0.0, 0.35]  # Sur cette game on cherche juste +/- 0.35 °C fiche produit Rev C
         full_scale: 1050.0
 
 
@@ -101,6 +110,8 @@ Ranges:
         calibrate: False
         english_name: "Output Pt1000 (-)"
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        checkstability: True
+        relay_3w: [0x40, 1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: "*CLS;SENSE2:FUNC RTD;RTD:TYPE PT1000;:SYST:ERR?"
         aoip2: "*CLS;SENSE2:FUNC RTD;RTD:WIRES WIRES_4;:SYST:ERR?"
         # giv4: ":MODE OUTPUT_TCT;:OUTPUT:SENSOR:TC:COMP:TYPE INT; TYPE?;:IN:VAL?" # Affiche en retour la valeur de compensation mesurée
@@ -110,7 +121,7 @@ Ranges:
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]
-        tolerance: [0.0, 0.3]  # Sur cette game on cherche juste +/- 0.15 °C
+        tolerance: [0.0, 0.35]  # Sur cette game on cherche juste +/- 0.35 °C fiche produit Rev C
         full_scale: 1050.0
 
 

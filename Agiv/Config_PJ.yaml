@@ -5,6 +5,9 @@ Configuration:
 
 Titre: "Configuration R450 avec PJ"
 
+# Evolution du 19/11/2024: Adaptation tolérance R450 et PT100 à la fiche produit Rev. C
+# (CR Réunion du 18/11/2024)
+
 
 # ------ Relay values --------
 # Corespondance Bits AGIV vs relay              
@@ -54,7 +57,7 @@ Ranges:
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
         calibration_points: [0.0, 450.0]
         points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
-        tolerance: [0.025, 0.03]  # Il faut aussi passer 0.05%
+        tolerance: [0.0, 0.15]  # +/-0.15 Ohms sur toutes l'échelle (fiche produit Rév C)
         full_scale: 450.0
 
     "Sortie resistance (-) 0.. 450R":
@@ -71,7 +74,7 @@ Ranges:
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
         calibration_points: [0.0, 450.0]
         points: [0.0, 0.1, 1.0, 80.0, 100.0, 160.0, 240.0, 320.0, 450.0]
-        tolerance: [0.025, 0.03]  #  0.025% +/- 0.03R
+        tolerance: [0.0, 0.15]  # +/-0.15 Ohms sur toutes l'échelle (fiche produit Rév C)
         full_scale: 450.0
 
 
@@ -88,7 +91,7 @@ Ranges:
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]
-        tolerance: [0.00, 0.15]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
+        tolerance: [0.00, 0.4]  # On tolere une différece de +/-0.4° 
         full_scale: 1050.0
 
 
@@ -104,5 +107,5 @@ Ranges:
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]
-        tolerance: [0.0, 0.15]  # 0.05% +/-2°C  On tolere une différece de +/-2° entre les capteurs Calysse et GIV
+        tolerance: [0.00, 0.4]  # On tolere une différece de +/-0.4° 
         full_scale: 1050.0
