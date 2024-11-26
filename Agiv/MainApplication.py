@@ -144,16 +144,8 @@ def apply_style(app, style_fname):
         #setup stylesheet
         app.setStyleSheet(qss.readAll())
 
-def msg_dialog_unlock():
-    msg = QMessageBox()
-    msg.setIcon(QMessageBox.Question)
-    msg.setText("Le GIV est verouillé. On le déverouille pour l'ajustage ?")
-    msg.setWindowTitle("Déverouillage")
-    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-    ret = msg.exec_()
-    return (ret == QMessageBox.Yes)
 
-bench_version = "A Puissance 3 - AGIV V3.1 ELA 11/2024"
+bench_version = "A Puissance 3 - AGIV V3.2 ELA 11/2024"
 
 def print_start_options():
     print(f"AGIV_BENCH version: {bench_version}")
@@ -280,25 +272,8 @@ def start_module_application():
         db.register_Aoip_in_DB(aoip_data)
 
     # Get GIV4 S/N and Set log file according to giv identifiant
-    
-    d_drv.register_new_giv()  # Get Giv_id, and register it if it is new
-    d_drv.check_for_giv()
-    # Check if GIV is looked. If Yes, ask to unlock
-    giv_lock = is_giv_locked(d_drv.scpi_giv4)
-    
-    # For debug, we unlock systematiquely
-    if False and giv_lock:
-        unlock_giv(d_drv.scpi_giv4)
-        giv_lock = False
-
-    if giv_lock:    # If GIV is locked, ask for unlock
-        res  = msg_dialog_unlock()
-        if res:
-            unlock_giv(d_drv.scpi_giv4)
-        else: # If we keep locked, disable calibration writing capabilitie 
-           AppMW.cBoxWriteCal.setChecked(False)
-           AppMW.cBoxWriteCal.setEnabled(False)
-
+    # The GIV conection is now detected by a timer when a new COM port appeart
+    # in CDevicesDriver
 
     exit = app.exec_() 
     d_drv.send_stop_remote() 

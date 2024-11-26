@@ -13,7 +13,7 @@ from .CSerialScpiConnexion import *
 import re
 #import os       # file i/o for debug combobox
 from .Utilities import *
-from .GivUtilities import get_giv_id, get_giv_caldate, get_last_giv_id, reset_last_giv_id
+from .GivUtilities import *
 from .CDBManager import get_database
 import time
 
@@ -38,6 +38,14 @@ def get_devices_driver():
     """ Return the instance of the device driver """
     return d_driver
 
+def msg_dialog_unlock():
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Question)
+    msg.setText("Le GIV est verouillé. On le déverouille pour l'ajustage ?")
+    msg.setWindowTitle("Déverouillage")
+    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    ret = msg.exec_()
+    return (ret == QMessageBox.Yes)
 
 
 class CDevicesDriver(QtCore.QObject):
@@ -122,7 +130,23 @@ class CDevicesDriver(QtCore.QObject):
             self.pw.lEIdentifiant.setText(f"{giv_id}")
             self.pw.lE_DateCalib.setText(giv_date)
 
-    
+
+    def check_for_giv_lock(self):
+        # Check if GIV is looked. If Yes, ask to unlock
+        giv_lock = is_giv_locked(self.scpi_giv4)
+        
+        # For debug, we unlock systematiquely
+        debug = False
+        if debug and giv_lock:
+            unlock_giv(self.scpi_giv4)
+            giv_lock = False
+        if giv_lock:    # If GIV is locked, ask for unlock
+            res  = msg_dialog_unlock()
+            if res:
+                unlock_giv(self.scpi_giv4)
+                self.pw.cBoxWriteCal.setChecked(True)   # Show writing capability
+            else: # If we keep locked, disable calibration writing capabilitie on HMI
+                self.pw.cBoxWriteCal.setChecked(False)
 
     """ Function to check if the giv is connected or not """
     def check_for_giv(self, print_slot = None):
@@ -131,6 +155,7 @@ class CDevicesDriver(QtCore.QObject):
             # If we find giv on a new port, register it
             if self.scpi_giv4.device_port is not None:
                 self.register_new_giv()
+                self.check_for_giv_lock()
         else:
             # Check all ports, return true if a used port disapear
             removed = CSerialScpiConnexion.update_awailable_ports()
