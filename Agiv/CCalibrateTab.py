@@ -1,5 +1,7 @@
 # This Python file uses the following encoding: utf-8
-
+""" 
+V3.2: If Z_Factor is set to 0.0, we don't adjust Z, and and instead try to compensate for it at FS point
+"""
 #from PySide2 import QtWidget
 from PySide2 import QtCore
 
@@ -188,7 +190,13 @@ class CCalibrationValues(QObject):
             self.y[0] = self.devices.check_value(self.x[0])  # Control the point x0,y0
             self.y[1] = self.devices.check_value(self.x[1])  # Control the point x1,y1
             self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
-            self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
+            # If we can't adjust Z, we try to correct it at FS point (we cheat on dev_a value)
+            if self.z_factor == 0.0:  # Can't adjust Z
+                self.sig_CCalibVal_Message.emit("Ajustage reglage G seulement", q_green_color, INFO_FONT )
+                self.dev_a = self.y[1] / self.x[1]
+            else:  # In nomal operation mode, we adjust dev_a with the 2 points Z ans FS            
+                self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
+                self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
             # Check abnormal value
             if self.dev_a > 1.2 or self.dev_a < 0.8:
                 self.error = True
@@ -229,7 +237,7 @@ class CCalibrationValues(QObject):
             self.cmd_adjust_param('Z', self.new_z)
             print (f"Set Z= {self.new_z}")
             logger.logdata(f'Set Z ={self.new_z}')
-        else:
+        else: # The Z factor is set to 0, so we dont adjust Z, and we try to adjut Z with G at FS point
             self.new_z = 0.0
             logger.logdata(f'Z not set ')
         self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values

@@ -1,4 +1,11 @@
 # This Python file uses the following encoding: utf-8
+""" This module define the CSerialScpiConnexion class.
+It permits to find modifications on detected COM ports, 
+open a port at the specifier parameters, 
+and can send a request and wait response to a connected device
+11/2024 V3.2 change: Debug message only if COM ports list change
+"""
+
 from PySide2.QtCore import QObject, Signal
 import time
 import serial, serial.tools.list_ports
@@ -88,7 +95,6 @@ class CSerialScpiConnexion(QObject):
     def update_awailable_ports(cls):
         # Check for COM port, return true if a used com port disapear from awailables ports
         removed = False
-        #cls.list_com_ports = cls.find_COM_devices() 
         cls.initialise_com_ports()
         for com in cls.list_used_com:
             if not com in cls.list_com_ports:

@@ -47,7 +47,8 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..450R"
-        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        # Inversé // Calys   relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
@@ -64,7 +65,8 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (-) 0..450R"
-        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        # inverse // Calys  -- relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
