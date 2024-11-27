@@ -1,0 +1,6 @@
+openpyxl==3.0.9
+psycopg2==2.9.6
+pyOpenSSL==23.3.0
+pyserial==3.5
+PySide2==5.15.2.1
+PyYAML==6.0
