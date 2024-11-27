@@ -1,4 +1,7 @@
 # This Python file uses the following encoding: utf-8
+"""
+V3.2 Evolution: call deviceDriver.check_for_giv() only if deviceDriver is not None.
+"""
 from .GivUtilities import get_giv_id
 from .Utilities import *
 import os
@@ -166,7 +169,7 @@ class CTabMeasures(QThread):
                 self.timer_divider = 0
                 #Check only if the calibration is not running
                 if not self.phmi.cc_tab.running:
-                    dd.check_for_giv(self.phmi.Qmessage_sscpi_print)
+                    dd.check_for_giv(self.phmi.Qmessage_sscpi_print) if dd else None
             return
 
         if self.state == CMeasSt.measures_abort:

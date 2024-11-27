@@ -4,6 +4,7 @@ AGIV bench. It could create an instance of this classe, that can be used by the 
 modules to drive the bench. The function get_devices_driver() permits to acces it
 as a global variable
 10/2024 V3 change: use config file to define the scpi devices properties
+11/2024 V3.2 change: register GIV if connected at start time
 """
 
 from PySide2 import QtCore
@@ -88,6 +89,10 @@ class CDevicesDriver(QtCore.QObject):
         # Go device to remote mode
         if self.scpi_aoip.device_port != None:
             self.send_remote(self.scpi_aoip)       # AOIP go in REMote mode
+
+        if self.scpi_giv4.device_port != None:  # We just found GIV connected at start time
+            self.register_new_giv()
+            self.check_for_giv_lock()
         # Connect debuging tools 
         #self.route_debug_widgets()
 

@@ -37,15 +37,17 @@ class CSerialScpiConnexion(QObject):
     #sigTest= QtCore.pyqtSignal()
 
 
-    list_com_ports = []   # Com port list
+    list_com_ports = None   # Com port list
     list_used_com = []      # Used port list
     last_time = time.perf_counter()
 
-    
     @classmethod
     def initialise_com_ports(cls):
-        if cls.list_com_ports == None:
-            cls.list_com_ports = cls.find_COM_devices()
+        list_com_find = cls.find_COM_devices()
+        if cls.list_com_ports== None or cls.list_com_ports != list_com_find: # there is a change in connected COM ports
+            print(f"New finded ports: {list_com_find}")
+            cls.list_com_ports = list_com_find
+    
 
     @classmethod
     def register_used_port(cls, port_name):
@@ -69,7 +71,7 @@ class CSerialScpiConnexion(QObject):
             description = p[1].lower()
             if not 'bluetooth' in description: #Exlude Bluetooth Comport
                 usb_port_list.append(comport)
-        print("Find ports: {}".format(usb_port_list))
+        #print(f"Find ports: {usb_port_list}")
         return usb_port_list
 
 
@@ -86,7 +88,8 @@ class CSerialScpiConnexion(QObject):
     def update_awailable_ports(cls):
         # Check for COM port, return true if a used com port disapear from awailables ports
         removed = False
-        cls.list_com_ports = cls.find_COM_devices() 
+        #cls.list_com_ports = cls.find_COM_devices() 
+        cls.initialise_com_ports()
         for com in cls.list_used_com:
             if not com in cls.list_com_ports:
                 cls.list_used_com.remove(com)
