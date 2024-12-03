@@ -23,7 +23,7 @@ Titre: "Configuration R450 avec PJ"
 Options:
     advanced_tab: True   # Enable Adanced tab  panel
     advanced_box: False   # Enable Adanced cbox  panel
-    reports_directory: 'z:\Agiv_reports'
+    reports_directory: '\\Agora\Rapport\GIV4'
 
 Devices:
     scpi_relays: [',AGIV', 'color_cyan', 'avec le banc AGIV', 0.2, 115200]
@@ -47,12 +47,14 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..450R"
+        checkstability: 'auto'  # cut mesurement wire before the measure
         # Inversé // Calys   relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relay_3w: [0x40, 1.5]   # Pour desactiver 4W le temps de stabiliser le GIV avec le PJ
         aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
         measure_on: aoip 
-        aoip_meas_time: 4.0 # Resistor is more slow
+        aoip_meas_time: 6.0 # Resistor is more slow
         correction: ":OUTput:RES:0400:POS:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
@@ -65,12 +67,14 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (-) 0..450R"
+        checkstability: 'auto'  # cut mesurement wire before the measure
+        relay_3w: [0x20, 1.5]   # Pour desactiver 4W le temps de stabiliser le GIV avec le PJ
         # inverse // Calys  -- relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         aoip: "*CLS;RANGE_IN OHM600,WIRE4;*ESR?"
         giv4: ":MODE OUTPUT_RESISTOR_0400OHMS"
-        set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','PJ6301','MEAS?', '',6]          # Device where measure is get, message to get,  expected answer, wait time
+        measure_on: aoip 
+        aoip_meas_time: 5.0 # Resistor is more slow
         correction: ":OUTput:RES:0400:NEG:ADJ_DAC_"
         z_factor: 0.0    # For resistance, don't set Z
         z_g_overwrite: True     # For this range, force default values g=1 and z=0 before correction calculation
@@ -85,11 +89,14 @@ Ranges:
         active: True
         calibrate: False
         english_name: "Output Pt100 (+)"
-        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relay_3w: [0x40, 1.5]   # Pour desactiver 4W le temps de stabiliser le GIV avec le PJ
+        checkstability: 'auto'  # cut mesurement wire before the measure
+        relay_3w: [0x40, 1.5]   # Pour desactiver 4W le temps de stabiliser le GIV avec le PJ
         aoip: "*CLS;RANGE_IN RT,WIRE4,TYP_PT100,CEL;*ESR?"
         giv4: "*CLS;:MODE OUTPUT_RTD_PT100;:SYST:ERR?" # Affiche en retour la valeur de compensation mesurée
-        set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','PJ6301','MEAS?', '',6]          # Device where measure is get, message to get,  expected answer, wait time
+        measure_on: aoip 
+        aoip_meas_time: 6.0 # Resistor is more slow
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]
@@ -101,11 +108,13 @@ Ranges:
         active: True
         calibrate: False
         english_name: "Output Pt100 (-)"
-        relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
+        relay_3w: [0x20, 1.5]   # Pour desactiver 4W le temps de stabiliser le GIV avec le PJ
+        relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
+        checkstability: 'auto'  # cut mesurement wire before the measure
         aoip: "*CLS;RANGE_IN RT,WIRE4,TYP_PT100,CEL;*ESR?"
         giv4: "*CLS;:MODE OUTPUT_RTD_PT100;:SYST:ERR?" # Affiche en retour la valeur de compensation mesurée
-        set_val: ['Set',GIV4','*CLS; :OUT:VAL {v};:SYST:ERR?','No Error']  # Device where the reference is set, message to set, expected answer
-        get_val: ['Get','PJ6301','MEAS?', '',6]          # Device where measure is get, message to get,  expected answer, wait time
+        measure_on: aoip 
+        aoip_meas_time: 5.0 # Resistor is more slow
         correction: "None"  # Pas d'ajustage G/Z: Ce sont ceux des resistance
         calibration_points: [0, 0]
         points: [-200.0, -100.0, 0.0, +100.0, +200.0, 400.0]

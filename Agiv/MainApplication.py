@@ -145,7 +145,7 @@ def apply_style(app, style_fname):
         app.setStyleSheet(qss.readAll())
 
 
-bench_version = "A Puissance 3 - AGIV V3.2 ELA 11/2024"
+bench_version = "A Puissance 3 - AGIV V3.3 ELA 12/2024"
 
 def print_start_options():
     print(f"AGIV_BENCH version: {bench_version}")

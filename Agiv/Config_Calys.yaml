@@ -23,7 +23,7 @@ Titre: "Configuration Calys sans R 450 Ohms"
 Options:
     advanced_tab: True   # Enable Adanced tab  panel
     advanced_box: False   # Enable Adanced cbox  panel
-    reports_directory: 'z:\Agiv_reports'
+    reports_directory: '\\Agora\Rapport\GIV4'
 
 Devices:
     scpi_relays: [',AGIV', 'color_cyan', 'avec le banc AGIV', 0.2, 115200]
@@ -47,7 +47,7 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (+) 0..4500R"
-        checkstability: True
+        checkstability: "question"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
         relay_3w: [0x20, 1.5]   # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
@@ -67,9 +67,9 @@ Ranges:
         active: True
         calibrate: True
         english_name: "Resistor simulator (-) 0..4500R"
-        checkstability: True
+        checkstability: "question"
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
-        relay_3w: [0x20,  1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
+        relay_3w: [0x40,  1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: ":SENSE2:FUNC RES;RES:RANGE 3600OHM"
         aoip2: ":SENSE2:FUNC RES;RES:WIR WIRES_4"
         giv4: ":MODE OUTPUT_RESISTOR_04KOHMS"
@@ -90,7 +90,7 @@ Ranges:
         calibrate: False
         english_name: "Output Pt1000 (+)"
         relays: [0x01, 0x08, 0x20]     # V+:B, V-:C Rhom+
-        checkstability: True
+        checkstability: "question"
         relay_3w: [0x20, 1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: "*CLS;SENSE2:FUNC RTD;RTD:TYPE PT1000;:SYST:ERR?"
         aoip2: "*CLS;SENSE2:FUNC RTD;RTD:WIRES WIRES_4;:SYST:ERR?"
@@ -110,7 +110,7 @@ Ranges:
         calibrate: False
         english_name: "Output Pt1000 (-)"
         relays: [0x02, 0x04, 0x40]     # V+:C, V-:B Rhom-
-        checkstability: True
+        checkstability: "question"
         relay_3w: [0x40, 1.5]  # Pour desactiver 3W le temps de stabiliser le GIV avec le Calys
         aoip: "*CLS;SENSE2:FUNC RTD;RTD:TYPE PT1000;:SYST:ERR?"
         aoip2: "*CLS;SENSE2:FUNC RTD;RTD:WIRES WIRES_4;:SYST:ERR?"

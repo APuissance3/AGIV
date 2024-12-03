@@ -5,6 +5,9 @@ modules to drive the bench. The function get_devices_driver() permits to acces i
 as a global variable
 10/2024 V3 change: use config file to define the scpi devices properties
 11/2024 V3.2 change: register GIV if connected at start time
+12/2024 V3.3 change: Possibility to cut the measurement wire automatically or manually with a prompt
+                    (checkstability parameter = "auto" or "question")
+
 """
 
 from PySide2 import QtCore
@@ -266,7 +269,7 @@ class CDevicesDriver(QtCore.QObject):
                             "Vérification stabilité")
 
 
-    def check_value(self, val, flg_man_stab=False):
+    def check_value(self, val, wait_stab = None):
         measure_on = ''
         flg_new_syntax = False
         set_get = []
@@ -357,8 +360,10 @@ class CDevicesDriver(QtCore.QObject):
                 retry = 3
                 while retry > 0 and len(rx) == 0: # retry until we have a response 
                     retry -= 1
-                    if flg_man_stab:
+                    if wait_stab is not None and wait_stab == 'question': # Attente validation par l'operateur
                         self.manualcheck_stability()
+                    if wait_stab is not None and wait_stab == 'auto': # Debranche rebranche relais seul avant la mesure
+                        self.set_bench_relay_3W_disconect()
                     print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
                     time.sleep(aoip_wait_time)  # Wait for measure stabilisation
                     #QTimer.singleShot(aoip_wait_time, None)
