@@ -8,12 +8,16 @@
 # V2.1 du 28/05/2024:
 # Modification syntaxe du fichier Bench_config pour pouvoir lire les mesures moyennées du Calys
 
+# V3.3 du 16/04/2025:
+# Ajout de MsgMThreadDialog pour poser la question mesure stable en multithread
 
 
 
-from PySide2.QtWidgets import QApplication, QMessageBox
+
+from PySide2.QtWidgets import QApplication, QMessageBox, QPushButton, QLabel, QDialog
 from PySide2 import QtWidgets
 from PySide2 import QtCore
+from PySide2.QtCore import Signal, QObject
 import os, sys
 from pathlib import Path
 
@@ -29,6 +33,14 @@ from .GivUtilities import *
 from .CDBManager import  initialise_database
 from .CLogger import create_logger, get_logger
 from .XlsReportGenerator import set_xls_flg_last_day_only, set_xls_flg_last_meas_only 
+
+
+
+
+class Communication(QObject):
+    reponse_recue = Signal(bool)  # Signal identique dans PySide2
+
+
 
 
 class MainWindow(QtWidgets.QMainWindow, 
@@ -62,6 +74,8 @@ class MainWindow(QtWidgets.QMainWindow,
 
         self.cc_tab.sig_run_measure.connect(self.cm_tab.slot_run_measure_after_calibration) # Start measure process after calibration
 
+        self.communication.reponse_recue.connect(self.traiter_reponse)
+
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, False) 
         self.setFixedSize(self.size()) # Disable resizing
         
@@ -89,6 +103,42 @@ class MainWindow(QtWidgets.QMainWindow,
         self.Qmessages_print(message, color, font)
 
 
+
+# Test ajout dialogue compatible mutithread, non modale
+
+    # 
+    def traiter_reponse(self, reponse):
+        print(f"Réponse reçue : {reponse}")
+        # Logique métier ici
+        d_drv= get_devices_driver()
+        if reponse == True:
+            d_drv.set_bench_relays()     #restore 3W circuit
+
+    def MsgMThreadDialog(self, question):
+        # Crée une boîte de dialogue NON modale
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Confirmation")
+        layout = QVBoxLayout()
+        
+        label = QLabel(question)
+        btn_oui = QPushButton("Oui")
+        btn_non = QPushButton("Non")
+        
+        # Connecte les boutons à l'émission du signal
+        btn_oui.clicked.connect(lambda: self._envoyer_reponse(True, dialog))
+        btn_non.clicked.connect(lambda: self._envoyer_reponse(False, dialog))
+        
+        layout.addWidget(label)
+        layout.addWidget(btn_oui)
+        layout.addWidget(btn_non)
+        dialog.setLayout(layout)
+        dialog.show()  # Affiche sans bloquer
+
+    def _envoyer_reponse(self, reponse, dialog):
+        dialog.close()
+        self.communication.reponse_recue.emit(reponse)  # Émet la réponse
+
+# Fin test dialogue -----------------------------------
 
     def display_error(self, str_err=None):
         """ Print red message in large charaters on the TextConsole """
@@ -145,7 +195,7 @@ def apply_style(app, style_fname):
         app.setStyleSheet(qss.readAll())
 
 
-bench_version = "A Puissance 3 - AGIV V3.2 ELA 11/2024"
+bench_version = "A Puissance 3 - AGIV V3.3 ELA 12/2024"
 
 def print_start_options():
     print(f"AGIV_BENCH version: {bench_version}")

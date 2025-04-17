@@ -5,6 +5,7 @@ modules to drive the bench. The function get_devices_driver() permits to acces i
 as a global variable
 10/2024 V3 change: use config file to define the scpi devices properties
 11/2024 V3.2 change: register GIV if connected at start time
+12/2024 V3.3 change: Possibility to cut the measurement wire automatically or manually with a prompt
 """
 
 from PySide2 import QtCore
@@ -259,14 +260,20 @@ class CDevicesDriver(QtCore.QObject):
     """ Pose pour debrancher le fil 3W pendant un certain temps pour assurer la stabilité du couple Calys / Giv """
     def manualcheck_stability(self):
         ok = False
+        self.set_bench_relay_3W_disconect()
+        self.pw.MsgMThreadDialog( "Est ce que la tension AC sur les bornes COM/V+\n"
+                            "est inférieure à 5 mV ?  (YES /NO)\n",
+                            "Vérification stabilité")
+    """
         while not ok:
             self.set_bench_relay_3W_disconect()
+            MsgMThreadDialog()
             ok = msg_dialog_confirm( "Est ce que la tension AC sur les bornes COM/V+\n"
                             "est inférieure à 5 mV ?  (YES /NO)\n",
                             "Vérification stabilité")
+    """
 
-
-    def check_value(self, val, flg_man_stab=False):
+    def check_value(self, val, wait_stab = None):
         measure_on = ''
         flg_new_syntax = False
         set_get = []
@@ -357,8 +364,10 @@ class CDevicesDriver(QtCore.QObject):
                 retry = 3
                 while retry > 0 and len(rx) == 0: # retry until we have a response 
                     retry -= 1
-                    if flg_man_stab:
+                    if wait_stab is not None and wait_stab == 'question': # Attente validation par l'operateur
                         self.manualcheck_stability()
+                    if wait_stab is not None and wait_stab == 'auto': # Debranche rebranche relais seul avant la mesure
+                        self.set_bench_relay_3W_disconect()
                     print("Wait {:03.1f}s for stabilisation".format(aoip_wait_time) )
                     time.sleep(aoip_wait_time)  # Wait for measure stabilisation
                     #QTimer.singleShot(aoip_wait_time, None)
@@ -404,8 +413,9 @@ class CDevicesDriver(QtCore.QObject):
         if len(rx)>0:
             val = int (rx) ^ int(relay_3w)
             self.set_bench_relays(val)  # Open 3W circuit
-            time.sleep(time_3w)         # wait time
-            self.set_bench_relays()     #restore 3W circuit
+            # Tentative multithread
+            #time.sleep(time_3w)         # wait time
+            #self.set_bench_relays()     #restore 3W circuit
 
 
     def set_bench_relays(self, value = None ):

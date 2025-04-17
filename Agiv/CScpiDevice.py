@@ -28,7 +28,7 @@ class CScpiDevice(QtCore.QObject):
     The constitution of the frames is based on the informations gived 
     in the configuration file.
     """
-    sig_communication_error = Signal(object, object, object)
+    sig_show_dialog = Signal(object, object, object)
     flg_simulate = False
 
     def __init__(self, cfg_file, cfg_name, idn_name, timeout, simu,  

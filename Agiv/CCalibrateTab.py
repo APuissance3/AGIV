@@ -1,5 +1,7 @@
 # This Python file uses the following encoding: utf-8
-
+""" 
+V3.2: If Z_Factor is set to 0.0, we don't adjust Z, and and instead try to compensate for it at FS point
+"""
 #from PySide2 import QtWidget
 from PySide2 import QtCore
 
@@ -41,7 +43,7 @@ class CCalibrationValues(QObject):
         self.parent = parent
         self.x = range_data['calibration_points']  #  x coordonates of the calibration points
         # If true, ask for user to check the stability on AC voltmeter
-        self.check_stability = range_data['checkstability'] if 'checkstability' in range_data else False 
+        self.check_stability = range_data['checkstability'] if 'checkstability' in range_data else None 
         self.y = [None] * 2     #  y coordonates readed values for x inputs
         self.res = [None] * 2   #  True if the y measure is in tolerance range
         self.dev_b = 0.0        #  calculated offset of the device near 0 point
@@ -119,8 +121,8 @@ class CCalibrationValues(QObject):
         self.cmd_adjust_param('G', 1.0)
         self.dev_g = 1.0
         self.sig_CCalibVal_Message.emit("Mesure des nouveaux points 0 et FS", q_green_color, INFO_FONT )
-        self.y[0] = self.devices.check_value(self.x[0], True)  # Control the point x0,y0
-        self.y[1] = self.devices.check_value(self.x[1], True)  # Control the point x1,y1
+        self.y[0] = self.devices.check_value(self.x[0], self.check_stability)  # Control the point x0,y0
+        self.y[1] = self.devices.check_value(self.x[1], self.check_stability)  # Control the point x1,y1
         self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
         self.sig_CCalibVal_Message.emit("Ajustage reglage G ", q_green_color, INFO_FONT )
         self.new_z =0.0
@@ -135,23 +137,24 @@ class CCalibrationValues(QObject):
             logger.logdata(f'Set G= {self.new_g}\n')
             logger.logdata(f'Keep Z= 0.0\n')
         # Le gain est rectifié, on lit le zéro avec ce nouveau gain
-        self.y[0] = self.devices.check_value(self.x[0], True)  # Reload y0 with the new G
+        self.y[0] = self.devices.check_value(self.x[0], self.check_stability)  # Reload y0 with the new G
         (self.res[0], min, max) = checker.check_val( self.x[0] , self.y[0]) # result for Z
-        self.y[1] = self.devices.check_value(self.x[1], True)  # Reload y1 with the new G
+        self.y[1] = self.devices.check_value(self.x[1], self.check_stability)  # Reload y1 with the new G
         (self.res[1], min, max) = checker.check_val( self.x[1] , self.y[1]) # result for FS
         logger.logdata('Nouvelles valeurs avec correction de G:\n')
         logger.logdata('  Y0= {: 9.6f}  Y1= {:> 9.6f}\n'.format(self.y[0], self.y[1]))
         self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
         # supprimé en manual check  - 
         # self.check_calibration("Valeurs finales")
-        ok = msg_dialog_info("Débranchez le voltmètre AC\n"
-                "si vous avez fini les ajustages 4500R\n",
-                "Modification câblage")
+        if self.check_stability is not None and self.check_stability=='question':
+            ok = msg_dialog_info("Débranchez le voltmètre AC\n"
+                    "si vous avez fini les ajustages 4500R\n",
+                    "Modification câblage")
 
 
 
     def exec_calibration(self):
-        if self.check_stability:
+        if self.check_stability is not None:
             self.exec_calibration_2points_manualcheck()
         else: 
             self.exec_calibration_2points()
@@ -188,7 +191,13 @@ class CCalibrationValues(QObject):
             self.y[0] = self.devices.check_value(self.x[0])  # Control the point x0,y0
             self.y[1] = self.devices.check_value(self.x[1])  # Control the point x1,y1
             self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
-            self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
+            # If we can't adjust Z, we try to correct it at FS point (we cheat on dev_a value)
+            if self.z_factor == 0.0:  # Can't adjust Z
+                self.sig_CCalibVal_Message.emit("Ajustage reglage G seulement", q_green_color, INFO_FONT )
+                self.dev_a = self.y[1] / self.x[1]
+            else:  # In nomal operation mode, we adjust dev_a with the 2 points Z ans FS            
+                self.dev_a = (self.y[1] - self.y[0]) / (self.x[1]-self.x[0])
+                self.sig_CCalibVal_Message.emit("Ajustage reglage G et Z", q_green_color, INFO_FONT )
             # Check abnormal value
             if self.dev_a > 1.2 or self.dev_a < 0.8:
                 self.error = True
@@ -229,7 +238,7 @@ class CCalibrationValues(QObject):
             self.cmd_adjust_param('Z', self.new_z)
             print (f"Set Z= {self.new_z}")
             logger.logdata(f'Set Z ={self.new_z}')
-        else:
+        else: # The Z factor is set to 0, so we dont adjust Z, and we try to adjut Z with G at FS point
             self.new_z = 0.0
             logger.logdata(f'Z not set ')
         self.parent.sig_register_value.emit(self.new_z, self.new_g, True) # Register write values
